@@ -16,7 +16,7 @@
 
 using namespace std;
 
-#define MAX_PORT 5000
+#define MAX_PORT 100
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
 {
@@ -70,6 +70,7 @@ public:
 	void Increment();
 	void AddToList(CString s);
 	void PrintList();
+	void PrintList(CString csInput);
 	bool IsStopped()
 	{
 		return m_bStopLoop;

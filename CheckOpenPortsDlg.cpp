@@ -65,18 +65,30 @@ void CCheckOpenPortsDlg::AddToList(CString s)
 	m_vList.push_back(s);
 	//mtx.unlock();
 }
+void CCheckOpenPortsDlg::PrintList(CString csInput)
+{
+	mtx.lock();
+	long nLength = m_ctrlResult.GetWindowTextLength();
+	m_ctrlResult.SetSel(0, 0);
+	m_ctrlResult.ReplaceSel(csInput);
+	//AfxGetThread()->PumpMessage();
+	//m_ctrlResult.SetFocus();
+	//m_ctrlResult.SetSel(-1);
+
+	mtx.unlock();
+}
 void CCheckOpenPortsDlg::PrintList()
 {
-	m_ctrlResult.SetWindowText(_T(""));
-	CString csRes = _T("");
+//	m_ctrlResult.SetWindowText(_T(""));
+	//CString csRes = _T("");
 	if (m_vList.empty())
-		m_ctrlResult.SetWindowText(_T("No open ports found on."));
-	else
+		m_ctrlResult.SetWindowText(_T("No open ports found."));
+/*	else
 	{
 		for (int i = 0; i < m_vList.size(); i++)
 			csRes += m_vList[i];
 		m_ctrlResult.SetWindowText(csRes);
-	}
+	}*/
 	m_ctrlResult.SetFocus();
 	m_ctrlResult.SetSel(-1);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
@@ -309,9 +321,15 @@ void ThreadMultiFunc(LPVOID pParam)
 				delete tMon;
 				tMon = NULL;
 			}
-			csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
+			csRes = _T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
 			g_dlgPtr->AddToList(csRes);
+			g_dlgPtr->PrintList(csRes);
 		}
+		//else
+		//{
+		//	csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
+		//	g_dlgPtr->PrintList(csRes);
+		//}
 		if (g_dlgPtr->IsStopped())
 		{
 			delete tMon;
