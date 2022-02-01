@@ -4,8 +4,8 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "CheckOpenPorst.h"
-#include "CheckOpenPorstDlg.h"
+#include "CheckOpenPorts.h"
+#include "CheckOpenPortsDlg.h"
 #include "afxdialogex.h"
 
 
@@ -21,7 +21,7 @@ typedef struct
 #endif
 
 HANDLE m_hExit;
-CCheckOpenPorstDlg* g_dlgPtr = NULL;
+CCheckOpenPortsDlg* g_dlgPtr = NULL;
 // CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
@@ -55,17 +55,17 @@ BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CCheckOpenPorstDlg dialog
+// CCheckOpenPortsDlg dialog
 
 mutex mtx;
 
-void CCheckOpenPorstDlg::AddToList(CString s)
+void CCheckOpenPortsDlg::AddToList(CString s)
 {
 	//mtx.lock();
 	m_vList.push_back(s);
 	//mtx.unlock();
 }
-void CCheckOpenPorstDlg::PrintList()
+void CCheckOpenPortsDlg::PrintList()
 {
 	m_ctrlResult.SetWindowText(_T(""));
 	CString csRes = _T("");
@@ -83,14 +83,14 @@ void CCheckOpenPorstDlg::PrintList()
 	m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
 }
 
-CCheckOpenPorstDlg::CCheckOpenPorstDlg(CWnd* pParent /*=nullptr*/)
+CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHECKOPENPORST_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tMonitor = NULL;
 }
 
-void CCheckOpenPorstDlg::DoDataExchange(CDataExchange* pDX)
+void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_IPADDRESS_IP, m_ctrlIPAddress);
@@ -100,20 +100,20 @@ void CCheckOpenPorstDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_PORT, m_ctrlBtnCheckOpenPorts);
 }
 
-BEGIN_MESSAGE_MAP(CCheckOpenPorstDlg, CDialogEx)
+BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(IDC_BUTTON_PORT, &CCheckOpenPorstDlg::OnBnClickedButtonPort)
-	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPorstDlg::OnBnClickedButton2)
-	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPorstDlg::OnBnClickedButtonCheckport)
+	ON_BN_CLICKED(IDC_BUTTON_PORT, &CCheckOpenPortsDlg::OnBnClickedButtonPort)
+	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPortsDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckport)
 	ON_WM_CLOSE()
 END_MESSAGE_MAP()
 
 
-// CCheckOpenPorstDlg message handlers
+// CCheckOpenPortsDlg message handlers
 
-BOOL CCheckOpenPorstDlg::OnInitDialog()
+BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -151,7 +151,7 @@ BOOL CCheckOpenPorstDlg::OnInitDialog()
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
-void CCheckOpenPorstDlg::OnSysCommand(UINT nID, LPARAM lParam)
+void CCheckOpenPortsDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
 	{
@@ -168,7 +168,7 @@ void CCheckOpenPorstDlg::OnSysCommand(UINT nID, LPARAM lParam)
 //  to draw the icon.  For MFC applications using the document/view model,
 //  this is automatically done for you by the framework.
 
-void CCheckOpenPorstDlg::OnPaint()
+void CCheckOpenPortsDlg::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -195,11 +195,11 @@ void CCheckOpenPorstDlg::OnPaint()
 
 // The system calls this function to obtain the cursor to display while the user drags
 //  the minimized window.
-HCURSOR CCheckOpenPorstDlg::OnQueryDragIcon()
+HCURSOR CCheckOpenPortsDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
 }
-string CCheckOpenPorstDlg::UnicodeToMultiByte(wstring& wstr)
+string CCheckOpenPortsDlg::UnicodeToMultiByte(wstring& wstr)
 {
 	if (wstr.empty()) 
 		return string();
@@ -210,7 +210,7 @@ string CCheckOpenPorstDlg::UnicodeToMultiByte(wstring& wstr)
 	return strTo;
 }
 
-bool CCheckOpenPorstDlg::IsPortOpen(TCHAR* ipAdd, TCHAR* port)
+bool CCheckOpenPortsDlg::IsPortOpen(TCHAR* ipAdd, TCHAR* port)
 {
 	//mtx.lock();
 	WSADATA wsaData;
@@ -281,7 +281,7 @@ bool CCheckOpenPorstDlg::IsPortOpen(TCHAR* ipAdd, TCHAR* port)
 	//mtx.unlock();
 	return true;
 }
-void CCheckOpenPorstDlg::Increment()
+void CCheckOpenPortsDlg::Increment()
 {
 	m_nThread++;
 	m_ctrlProgressStatus.SetPos(m_nThread);
@@ -347,7 +347,7 @@ void ThreadMonitorThreads(LPVOID pParam)
 	g_dlgPtr->PrintList();
 	return;
 }
-void CCheckOpenPorstDlg::OnBnClickedButtonPort()
+void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
 	m_bStopLoop = false;
@@ -383,14 +383,14 @@ void CCheckOpenPorstDlg::OnBnClickedButtonPort()
 }
 
 
-void CCheckOpenPorstDlg::OnBnClickedButton2()
+void CCheckOpenPortsDlg::OnBnClickedButton2()
 {
 	m_bStopLoop = true;
 //	PrintList();
 }
 
 
-void CCheckOpenPorstDlg::OnBnClickedButtonCheckport()
+void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 {
 	// TODO: Add your control notification handler code here
 	CString cs;
@@ -415,7 +415,7 @@ void CCheckOpenPorstDlg::OnBnClickedButtonCheckport()
 }
 
 
-void CCheckOpenPorstDlg::OnClose()
+void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
 	if (m_tMonitor != NULL)

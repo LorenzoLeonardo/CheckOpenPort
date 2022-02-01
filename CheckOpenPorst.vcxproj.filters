@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CheckOpenPorst.h">
+    <ClInclude Include="CheckOpenPorts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CheckOpenPorstDlg.h">
+    <ClInclude Include="CheckOpenPortsDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="framework.h">
@@ -35,10 +35,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CheckOpenPorst.cpp">
+    <ClCompile Include="CheckOpenPorts.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CheckOpenPorstDlg.cpp">
+    <ClCompile Include="CheckOpenPortsDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">

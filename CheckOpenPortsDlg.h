@@ -17,12 +17,12 @@
 using namespace std;
 
 #define MAX_PORT 5000
-// CCheckOpenPorstDlg dialog
-class CCheckOpenPorstDlg : public CDialogEx
+// CCheckOpenPortsDlg dialog
+class CCheckOpenPortsDlg : public CDialogEx
 {
 // Construction
 public:
-	CCheckOpenPorstDlg(CWnd* pParent = nullptr);	// standard constructor
+	CCheckOpenPortsDlg(CWnd* pParent = nullptr);	// standard constructor
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

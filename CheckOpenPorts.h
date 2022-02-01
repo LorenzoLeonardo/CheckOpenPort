@@ -11,14 +11,14 @@
 #include "resource.h"		// main symbols
 
 
-// CCheckOpenPorstApp:
+// CCheckOpenPortsApp:
 // See CheckOpenPorst.cpp for the implementation of this class
 //
 
-class CCheckOpenPorstApp : public CWinApp
+class CCheckOpenPortsApp : public CWinApp
 {
 public:
-	CCheckOpenPorstApp();
+	CCheckOpenPortsApp();
 
 // Overrides
 public:
@@ -29,4 +29,4 @@ public:
 	DECLARE_MESSAGE_MAP()
 };
 
-extern CCheckOpenPorstApp theApp;
+extern CCheckOpenPortsApp theApp;

@@ -4,24 +4,24 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "CheckOpenPorst.h"
-#include "CheckOpenPorstDlg.h"
+#include "CheckOpenPorts.h"
+#include "CheckOpenPortsDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-// CCheckOpenPorstApp
+// CCheckOpenPortsApp
 
-BEGIN_MESSAGE_MAP(CCheckOpenPorstApp, CWinApp)
+BEGIN_MESSAGE_MAP(CCheckOpenPortsApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 
-// CCheckOpenPorstApp construction
+// CCheckOpenPortsApp construction
 
-CCheckOpenPorstApp::CCheckOpenPorstApp()
+CCheckOpenPortsApp::CCheckOpenPortsApp()
 {
 	// support Restart Manager
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
@@ -31,14 +31,14 @@ CCheckOpenPorstApp::CCheckOpenPorstApp()
 }
 
 
-// The one and only CCheckOpenPorstApp object
+// The one and only CCheckOpenPortsApp object
 
-CCheckOpenPorstApp theApp;
+CCheckOpenPortsApp theApp;
 
 
-// CCheckOpenPorstApp initialization
+// CCheckOpenPortsApp initialization
 
-BOOL CCheckOpenPorstApp::InitInstance()
+BOOL CCheckOpenPortsApp::InitInstance()
 {
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
@@ -71,7 +71,7 @@ BOOL CCheckOpenPorstApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-	CCheckOpenPorstDlg dlg;
+	CCheckOpenPortsDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
