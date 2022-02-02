@@ -89,7 +89,6 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tMonitor = NULL;
-	m_hHandle = NULL;
 }
 
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
@@ -155,7 +154,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	if (dll_handle)
 	{
 		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
-		m_pfnPtrCleanEnumOpenPorts = (LPCleanEnumOpenPorts)GetProcAddress(dll_handle, "CleanEnumOpenPorts");
+		m_pfnPtrIsPortOpen = (LPIsPortOpen)GetProcAddress(dll_handle, "IsPortOpen");
 	}
 	g_dlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -288,17 +287,11 @@ void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 		g_dlg->m_ctrlResult.ReplaceSel(csStr);
 		g_dlg->Increment();
 	}
-	else
-	{
-		g_dlg->m_ctrlResult.SetWindowText(_T("Please wait a moment."));
-		AfxGetThread()->PumpMessage();
-	}
 	mtx.unlock();
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
-	m_pfnPtrCleanEnumOpenPorts(m_hHandle);
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
 	m_ctrlResult.SetWindowText(_T(""));
 	m_ctrlProgressStatus.ShowWindow(TRUE);
@@ -307,7 +300,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 	m_ctrlIPAddress.GetWindowText(m_IPAddress);
 	wstring strIP(m_IPAddress.GetBuffer());
 
-	m_hHandle = m_pfnPtrEnumOpenPorts(UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
+	m_pfnPtrEnumOpenPorts(UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
 }
 
 
@@ -320,13 +313,17 @@ void CCheckOpenPortsDlg::OnBnClickedButton2()
 
 void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 {
+
 	// TODO: Add your control notification handler code here
-/*	CString cs;
+	CString cs;
 	CString csPort;
 
 	m_ctrlIPAddress.GetWindowText(cs);
 	m_ctrlPortNum.GetWindowText(csPort);
-	if (IsPortOpen(cs.GetBuffer(), csPort.GetBuffer()))
+	int nLastError = 0;
+	wstring wStr(cs.GetBuffer());
+
+	if (m_pfnPtrIsPortOpen(UnicodeToMultiByte(wStr).c_str(), _ttoi(csPort), &nLastError))
 	{
 		CString csRes;
 		m_ctrlResult.GetWindowText(csRes);
@@ -339,14 +336,14 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 		m_ctrlResult.GetWindowText(csRes);
 		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
 		m_ctrlResult.SetWindowText(csRes);
-	}*/
+	}
+
 }
 
 
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
-	m_pfnPtrCleanEnumOpenPorts(m_hHandle);
 	FreeLibrary(dll_handle);
 
 	CDialogEx::OnClose();

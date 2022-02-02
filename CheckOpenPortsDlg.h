@@ -22,8 +22,8 @@ using namespace std;
 
 
 
-typedef  HANDLE(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
-typedef  void(*LPCleanEnumOpenPorts)(HANDLE hHandle);
+typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
+typedef  bool(*LPIsPortOpen)(const char*, int, int*);
 WCHAR* convert_to_wstring(const char* str);
 char* convert_from_wstring(const WCHAR* wstr);
 // CCheckOpenPortsDlg dialog
@@ -41,7 +41,7 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
-	LPCleanEnumOpenPorts m_pfnPtrCleanEnumOpenPorts;
+	LPIsPortOpen m_pfnPtrIsPortOpen;
 
 
 // Implementation
@@ -63,7 +63,7 @@ protected:
 	vector<thread*> v_Thread;
 	thread* m_tMonitor;
 	HMODULE dll_handle;
-	HANDLE m_hHandle;
+	
 public:
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
