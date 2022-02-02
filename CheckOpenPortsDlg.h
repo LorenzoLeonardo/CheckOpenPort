@@ -14,7 +14,7 @@
 #include <mutex>
 #include <vector>
 #include "EnzTCP.h"
-
+#include <map>
 using namespace std;
 
 #define MAX_PORT 5000
@@ -76,7 +76,7 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrl m_ctrlLANConnected;
-
+	map<string, string> m_mConnected;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;

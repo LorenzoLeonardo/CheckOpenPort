@@ -282,18 +282,30 @@ void GetLastErrorMessageString(wstring &str, int nGetLastError)
 void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsopen)
 {
 	mtx.lock();
+	if (ipAddress == NULL)
+	{
+		
+		g_dlg->m_ctrlLANConnected.DeleteAllItems();
+
+		int col = 0;
+
+		map<string, string>::iterator it = g_dlg->m_mConnected.begin();
+		int nRow = 0;
+		while (it != g_dlg->m_mConnected.end())
+		{
+			g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+				convert_to_wstring(it->first.c_str()), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+
+			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, convert_to_wstring(it->second.c_str()));
+			it++;
+			nRow++;
+		}
+		mtx.unlock();
+		return;
+	}
 	if (bIsopen)
 	{
-		int col = 0;
-		string ip(ipAddress);
-		string host(hostName);
-
-		int nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
-
-		g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-			convert_to_wstring(ip.c_str()), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
-
-		g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, convert_to_wstring(host.c_str()));
+		g_dlg->m_mConnected[ipAddress] = hostName;
 	}
 
 	mtx.unlock();
