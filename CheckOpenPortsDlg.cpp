@@ -99,6 +99,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDITPORT, m_ctrlPortNum);
 	DDX_Control(pDX, IDC_PROGRESS_STATUS, m_ctrlProgressStatus);
 	DDX_Control(pDX, IDC_BUTTON_PORT, m_ctrlBtnCheckOpenPorts);
+	DDX_Control(pDX, IDC_LIST_LAN, m_ctrlLANConnected);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -109,6 +110,9 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON2, &CCheckOpenPortsDlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON_CHECKPORT, &CCheckOpenPortsDlg::OnBnClickedButtonCheckport)
 	ON_WM_CLOSE()
+	ON_EN_CHANGE(IDC_EDIT_AREA, &CCheckOpenPortsDlg::OnEnChangeEditArea)
+	ON_BN_CLICKED(IDC_BUTTON_LISTEN_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonListenLan)
+	ON_BN_CLICKED(IDC_BUTTON_STOP_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStopLan)
 END_MESSAGE_MAP()
 
 
@@ -155,7 +159,15 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	{
 		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
 		m_pfnPtrIsPortOpen = (LPIsPortOpen)GetProcAddress(dll_handle, "IsPortOpen");
+		m_pfnPtrStartLocalAreaListening = (FNStartLocalAreaListening)GetProcAddress(dll_handle, "StartLocalAreaListening");
+		m_pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
 	}
+
+	LPCTSTR lpcRecHeader[] = { _T("IP Address"), _T("HostName"), };
+	int nCol = 0;
+
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 150);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 150);
 	g_dlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -267,6 +279,25 @@ void GetLastErrorMessageString(wstring &str, int nGetLastError)
 
 	str = lpMessage;
 }
+void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsopen)
+{
+	mtx.lock();
+	if (bIsopen)
+	{
+		int col = 0;
+		string ip(ipAddress);
+		string host(hostName);
+
+		int nRow = g_dlg->m_ctrlLANConnected.GetItemCount();
+
+		g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+			convert_to_wstring(ip.c_str()), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+
+		g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, convert_to_wstring(host.c_str()));
+	}
+
+	mtx.unlock();
+}
 void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 {
 	mtx.lock();
@@ -347,4 +378,35 @@ void CCheckOpenPortsDlg::OnClose()
 	FreeLibrary(dll_handle);
 
 	CDialogEx::OnClose();
+}
+
+
+void CCheckOpenPortsDlg::OnEnChangeEditArea()
+{
+	// TODO:  If this is a RICHEDIT control, the control will not
+	// send this notification unless you override the CDialogEx::OnInitDialog()
+	// function and call CRichEditCtrl().SetEventMask()
+	// with the ENM_CHANGE flag ORed into the mask.
+
+	// TODO:  Add your control notification handler code here
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
+{
+	// TODO: Add your control notification handler code here
+	CString csText;
+	
+	m_ctrlIPAddress.GetWindowText(csText);
+	wstring wstr(csText.GetBuffer());
+	string str = UnicodeToMultiByte(wstr);
+
+	m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener);
+}
+
+
+void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
+{
+	// TODO: Add your control notification handler code here
+	m_pfnPtrStopLocalAreaListening();
 }

@@ -24,6 +24,10 @@ using namespace std;
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
+typedef void (*FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr);
+typedef void (*FNStopLocalAreaListening)();
+
+
 WCHAR* convert_to_wstring(const char* str);
 char* convert_from_wstring(const WCHAR* wstr);
 // CCheckOpenPortsDlg dialog
@@ -42,7 +46,8 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
 	LPIsPortOpen m_pfnPtrIsPortOpen;
-
+	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
+	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 
 // Implementation
 protected:
@@ -70,6 +75,7 @@ public:
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
+	CListCtrl m_ctrlLANConnected;
 
 	vector<thread*> GetHandles()
 	{
@@ -104,4 +110,10 @@ public:
 	afx_msg void OnClose();
 protected:
 	CButton m_ctrlBtnCheckOpenPorts;
+public:
+	afx_msg void OnEnChangeEditArea();
+
+public:
+	afx_msg void OnBnClickedButtonListenLan();
+	afx_msg void OnBnClickedButtonStopLan();
 };
