@@ -271,19 +271,28 @@ void GetLastErrorMessageString(wstring &str, int nGetLastError)
 void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 {
 	mtx.lock();
-	CString csStr;
-	WCHAR* wr = convert_to_wstring(ipAddress);
-	wstring wsLastError;
-	GetLastErrorMessageString(wsLastError, nLastError);
-	if (bIsopen)
-		csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
-//	else
-//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
-	free(wr);
-	long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
-	g_dlg->m_ctrlResult.SetSel(0, 0);
-	g_dlg->m_ctrlResult.ReplaceSel(csStr);
-	g_dlg->Increment();
+
+	if (ipAddress != NULL)
+	{
+		CString csStr;
+		WCHAR* wr = convert_to_wstring(ipAddress);
+		wstring wsLastError;
+		GetLastErrorMessageString(wsLastError, nLastError);
+		if (bIsopen)
+			csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
+		//	else
+		//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
+		free(wr);
+		long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
+		g_dlg->m_ctrlResult.SetSel(0, 0);
+		g_dlg->m_ctrlResult.ReplaceSel(csStr);
+		g_dlg->Increment();
+	}
+	else
+	{
+		g_dlg->m_ctrlResult.SetWindowText(_T("Please wait a moment."));
+		AfxGetThread()->PumpMessage();
+	}
 	mtx.unlock();
 }
 
@@ -337,6 +346,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
+	m_pfnPtrCleanEnumOpenPorts(m_hHandle);
 	FreeLibrary(dll_handle);
 
 	CDialogEx::OnClose();
