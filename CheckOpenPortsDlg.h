@@ -13,10 +13,19 @@
 #include <process.h>
 #include <mutex>
 #include <vector>
+#include "EnzTCP.h"
 
 using namespace std;
 
-#define MAX_PORT 100
+#define MAX_PORT 5000
+
+
+
+
+typedef  HANDLE(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
+typedef  void(*LPCleanEnumOpenPorts)(HANDLE hHandle);
+WCHAR* convert_to_wstring(const char* str);
+char* convert_from_wstring(const WCHAR* wstr);
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
 {
@@ -31,6 +40,8 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
+	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
+	LPCleanEnumOpenPorts m_pfnPtrCleanEnumOpenPorts;
 
 
 // Implementation
@@ -51,12 +62,13 @@ protected:
 	int m_nThread;
 	vector<thread*> v_Thread;
 	thread* m_tMonitor;
+	HMODULE dll_handle;
+	HANDLE m_hHandle;
 public:
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
-	bool IsPortOpen(TCHAR* ipAdd, TCHAR* port);
 	CEdit m_ctrlResult;
 
 	vector<thread*> GetHandles()

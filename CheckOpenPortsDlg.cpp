@@ -9,20 +9,13 @@
 #include "afxdialogex.h"
 
 
-#pragma comment(lib, "Ws2_32.lib")
-typedef struct
-{
-	HANDLE handle;
-	int nPort;
-}TMONITOR;
+
+CCheckOpenPortsDlg* g_dlg;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-HANDLE m_hExit;
-CCheckOpenPortsDlg* g_dlgPtr = NULL;
-// CAboutDlg dialog used for App About
 
 class CAboutDlg : public CDialogEx
 {
@@ -71,10 +64,6 @@ void CCheckOpenPortsDlg::PrintList(CString csInput)
 	long nLength = m_ctrlResult.GetWindowTextLength();
 	m_ctrlResult.SetSel(0, 0);
 	m_ctrlResult.ReplaceSel(csInput);
-	//AfxGetThread()->PumpMessage();
-	//m_ctrlResult.SetFocus();
-	//m_ctrlResult.SetSel(-1);
-
 	mtx.unlock();
 }
 void CCheckOpenPortsDlg::PrintList()
@@ -100,6 +89,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tMonitor = NULL;
+	m_hHandle = NULL;
 }
 
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
@@ -160,6 +150,14 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	SetThreadRunning(false);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
 	m_ctrlPortNum.SetWindowText(_T("80"));
+
+	dll_handle = LoadLibrary(L"EnzTCP.dll");
+	if (dll_handle)
+	{
+		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
+		m_pfnPtrCleanEnumOpenPorts = (LPCleanEnumOpenPorts)GetProcAddress(dll_handle, "CleanEnumOpenPorts");
+	}
+	g_dlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -222,182 +220,85 @@ string CCheckOpenPortsDlg::UnicodeToMultiByte(wstring& wstr)
 	return strTo;
 }
 
-bool CCheckOpenPortsDlg::IsPortOpen(TCHAR* ipAdd, TCHAR* port)
-{
-	//mtx.lock();
-	WSADATA wsaData;
-	int iResult;
-	SOCKET ConnectSocket = INVALID_SOCKET;
-
-	// Initialize Winsock
-
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed: %d\n", iResult);
-		//mtx.unlock();
-		return false;
-	}
-	printf("WSAStartup\r\n");
-
-	struct addrinfo* result = NULL,
-		* ptr = NULL,
-		hints;
-
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	CString cs;
-	m_ctrlIPAddress.GetWindowText(cs);
-
-	// Resolve the server address and port
-	wstring ipAddress(ipAdd);
-	wstring nPort(port);
-	iResult = getaddrinfo(UnicodeToMultiByte(ipAddress).c_str(), UnicodeToMultiByte(nPort).c_str(), &hints, &result);
-	if (iResult != 0) {
-		printf("getaddrinfo failed: %d\n", iResult);
-		WSACleanup();
-		//mtx.unlock();
-		return false;
-	}
-	printf("getaddrinfo\r\n");
-	// Attempt to connect to the first address returned by
-// the call to getaddrinfo
-	ptr = result;
-
-	// Create a SOCKET for connecting to server
-	ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-		ptr->ai_protocol);
-
-	if (ConnectSocket == INVALID_SOCKET) {
-		printf("Error at socket(): %ld\n", WSAGetLastError());
-		freeaddrinfo(result);
-		WSACleanup();
-		//mtx.unlock();
-		return false;
-	}
-	printf("socket\r\n");
-
-	iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-	if (iResult == SOCKET_ERROR) {
-		freeaddrinfo(result);
-		closesocket(ConnectSocket);
-		ConnectSocket = INVALID_SOCKET;
-		//mtx.unlock();
-		return false;
-	}
-	freeaddrinfo(result);
-	closesocket(ConnectSocket);
-	WSACleanup();
-	//mtx.unlock();
-	return true;
-}
 void CCheckOpenPortsDlg::Increment()
 {
 	m_nThread++;
 	m_ctrlProgressStatus.SetPos(m_nThread);
-	
-}
 
-void ThreadMultiFunc(LPVOID pParam)
-{
-	CString cs;
-	TMONITOR* tMon = (TMONITOR *) pParam;
-	
-	if (!g_dlgPtr->IsStopped())
+	if(m_nThread >= MAX_PORT)
 	{
-
-		cs = g_dlgPtr->GetIPAddress();
-		CString csRes;
-		CString csPort;
-
-		csPort.Format(_T("%d"), tMon->nPort);
-
-		if (g_dlgPtr->IsPortOpen(cs.GetBuffer(), csPort.GetBuffer()))
-		{
-			if (g_dlgPtr->IsStopped())
-			{
-				delete tMon;
-				tMon = NULL;
-			}
-			csRes = _T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
-			g_dlgPtr->AddToList(csRes);
-			g_dlgPtr->PrintList(csRes);
-		}
-		//else
-		//{
-		//	csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
-		//	g_dlgPtr->PrintList(csRes);
-		//}
-		if (g_dlgPtr->IsStopped())
-		{
-			delete tMon;
-			tMon = NULL;
-		}
-		else
-		{
-			g_dlgPtr->Increment();
-			delete tMon;
-			tMon = NULL;
-		}
+		m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
+		m_ctrlProgressStatus.ShowWindow(FALSE);
 	}
-
-	if (tMon != NULL)
-	{
-		delete tMon;
-		tMon = NULL;
-	}
-	return;
-}
-
-void ThreadMonitorThreads(LPVOID pParam)
-{
-	vector<thread*>* PDlg = (vector<thread*>*)pParam;
 	
-	for (int i = 0; i < (*PDlg).size(); i++)
-		(* PDlg)[i]->join();
-
-	for (int i = 0; i < (*PDlg).size(); i++)
-		delete (* PDlg)[i];
-
-	(*PDlg).clear();
-	g_dlgPtr->PrintList();
-	return;
 }
+char* convert_from_wstring(const WCHAR* wstr)
+{
+	int wstr_len = (int)wcslen(wstr);
+	int num_chars = WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, NULL, 0, NULL, NULL);
+	CHAR* strTo = (CHAR*)malloc((num_chars + 1) * sizeof(CHAR));
+	if (strTo)
+	{
+		WideCharToMultiByte(CP_UTF8, 0, wstr, wstr_len, strTo, num_chars, NULL, NULL);
+		strTo[num_chars] = '\0';
+	}
+	return strTo;
+}
+WCHAR* convert_to_wstring(const char* str)
+{
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, (int)strlen(str), NULL, 0);
+	WCHAR* wstrTo = (WCHAR*)malloc((size_needed + 1) * sizeof(WCHAR));
+	memset(wstrTo, 0, (size_needed+1) * sizeof(WCHAR));
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)strlen(str), wstrTo, size_needed);
+
+	return wstrTo;
+}
+void GetLastErrorMessageString(wstring &str, int nGetLastError)
+{
+	DWORD dwSize = 0;
+	TCHAR lpMessage[0xFF];
+
+	dwSize = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
+		NULL,                // lpsource
+		nGetLastError,                 // message id
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
+		lpMessage,              // output buffer
+		sizeof(lpMessage),     // size of msgbuf, bytes
+		NULL);
+
+	str = lpMessage;
+}
+void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
+{
+	mtx.lock();
+	CString csStr;
+	WCHAR* wr = convert_to_wstring(ipAddress);
+	wstring wsLastError;
+	GetLastErrorMessageString(wsLastError, nLastError);
+	if (bIsopen)
+		csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
+//	else
+//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
+	free(wr);
+	long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
+	g_dlg->m_ctrlResult.SetSel(0, 0);
+	g_dlg->m_ctrlResult.ReplaceSel(csStr);
+	g_dlg->Increment();
+	mtx.unlock();
+}
+
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
+	m_pfnPtrCleanEnumOpenPorts(m_hHandle);
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
-	m_bStopLoop = false;
-	if (!v_Thread.empty())
-		return;
-	m_vList.clear();
-	if (m_tMonitor != NULL)
-	{
-		delete m_tMonitor;
-		m_tMonitor = NULL;
-	}
 	m_ctrlResult.SetWindowText(_T(""));
-
 	m_ctrlProgressStatus.ShowWindow(TRUE);
-	m_ctrlProgressStatus.SetRange(0, MAX_PORT);
-	m_nThread = MAX_PORT/10;
+	m_ctrlProgressStatus.SetRange(1, MAX_PORT);
+	m_nThread = 0;
 	m_ctrlIPAddress.GetWindowText(m_IPAddress);
-	g_dlgPtr = this;
-	
-	for (int i = 0; i < MAX_PORT && !m_bStopLoop; i++)
-	{
-		TMONITOR* tMon = new TMONITOR;
-		tMon->nPort = i;
-		m_ctrlProgressStatus.SetPos(m_nThread);
-		AfxGetThread()->PumpMessage();
-		thread *t = new thread(ThreadMultiFunc, tMon);
-		v_Thread.push_back(t);
-	}
+	wstring strIP(m_IPAddress.GetBuffer());
 
-	m_tMonitor = new thread(ThreadMonitorThreads, &v_Thread);
-	m_tMonitor->detach();
-	
+	m_hHandle = m_pfnPtrEnumOpenPorts(UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
 }
 
 
@@ -411,7 +312,7 @@ void CCheckOpenPortsDlg::OnBnClickedButton2()
 void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 {
 	// TODO: Add your control notification handler code here
-	CString cs;
+/*	CString cs;
 	CString csPort;
 
 	m_ctrlIPAddress.GetWindowText(cs);
@@ -429,17 +330,14 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 		m_ctrlResult.GetWindowText(csRes);
 		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
 		m_ctrlResult.SetWindowText(csRes);
-	}
+	}*/
 }
 
 
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
-	if (m_tMonitor != NULL)
-	{
-		delete m_tMonitor;
-		m_tMonitor = NULL;
-	}
+	FreeLibrary(dll_handle);
+
 	CDialogEx::OnClose();
 }

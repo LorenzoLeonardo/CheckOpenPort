@@ -185,6 +185,7 @@
   <ItemGroup>
     <ClInclude Include="CheckOpenPorts.h" />
     <ClInclude Include="CheckOpenPortsDlg.h" />
+    <ClInclude Include="EnzTCP.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
