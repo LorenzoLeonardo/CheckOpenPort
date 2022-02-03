@@ -102,6 +102,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_LAN, m_ctrlLANConnected);
 	DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
 	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
+	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -156,6 +157,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlProgressStatus.ShowWindow(FALSE);
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	m_ctrlEditPollingTime.SetWindowText(_T("5000"));
+	m_ctrlBtnStopListening.EnableWindow(FALSE);
+	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FULLROWSELECT| LVS_EX_GRIDLINES);
+
 	dll_handle = LoadLibrary(L"EnzTCP.dll");
 	if (dll_handle)
 	{
@@ -165,10 +169,11 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
 	}
 
-	LPCTSTR lpcRecHeader[] = { _T("IP Address"), _T("HostName"), };
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), };
 	int nCol = 0;
 
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 150);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 150);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 150);
 	g_dlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -284,21 +289,26 @@ void GetLastErrorMessageString(wstring &str, int nGetLastError)
 void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsopen)
 {
 	mtx.lock();
-	if (ipAddress == NULL)
+	if (strcmp(ipAddress, "end") == 0)
 	{
-		
 		g_dlg->m_ctrlLANConnected.DeleteAllItems();
 
 		int col = 0;
-
-		map<string, string>::iterator it = g_dlg->m_mConnected.begin();
+		map<ULONG, string>::iterator it = g_dlg->m_mConnected.begin();
 		int nRow = 0;
+		CString csIPAddress;
+		char szIPAddress[32];
+	
 		while (it != g_dlg->m_mConnected.end())
 		{
-			g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-				convert_to_wstring(it->first.c_str()), LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED, 0, 0);
+			inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
+			csIPAddress = szIPAddress;
 
-			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, convert_to_wstring(it->second.c_str()));
+			g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+				to_wstring(nRow+1).c_str(), 0,0, 0, 0);
+
+			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
+			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second.c_str()));
 			it++;
 			nRow++;
 		}
@@ -306,9 +316,17 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 		mtx.unlock();
 		return;
 	}
+	else if (strcmp(ipAddress, "stop") == 0)
+	{
+		g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
+	}
 	if (bIsopen)
 	{
-		g_dlg->m_mConnected[ipAddress] = hostName;
+		ULONG ipaddr;
+
+		inet_pton(AF_INET, ipAddress, &ipaddr);
+
+		g_dlg->m_mConnected[ipaddr] = hostName;
 	}
 
 	mtx.unlock();
@@ -414,9 +432,9 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	CString csPollTime;
 
 	m_ctrlBtnListen.EnableWindow(FALSE);
+	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	m_vList.clear();
-	m_ctrlLANConnected.DeleteAllItems();
-
+	
 	m_ctrlIPAddress.GetWindowText(csText);
 	wstring wstr(csText.GetBuffer());
 	string str = UnicodeToMultiByte(wstr);
@@ -438,5 +456,5 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
 {
 	// TODO: Add your control notification handler code here
 	m_pfnPtrStopLocalAreaListening();
-	m_ctrlBtnListen.EnableWindow(TRUE);
+	m_ctrlBtnStopListening.EnableWindow(FALSE);
 }

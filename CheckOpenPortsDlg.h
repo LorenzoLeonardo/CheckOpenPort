@@ -76,7 +76,7 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrl m_ctrlLANConnected;
-	map<string, string> m_mConnected;
+	map<ULONG, string> m_mConnected;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;
@@ -118,6 +118,7 @@ public:
 	afx_msg void OnBnClickedButtonStopLan();
 protected:
 	CEdit m_ctrlEditPollingTime;
-private:
+public:
 	CButton m_ctrlBtnListen;
+	CButton m_ctrlBtnStopListening;
 };
