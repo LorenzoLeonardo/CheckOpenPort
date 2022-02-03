@@ -24,7 +24,7 @@ using namespace std;
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
-typedef void (*FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr);
+typedef void (*FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTime);
 typedef void (*FNStopLocalAreaListening)();
 
 
@@ -116,4 +116,6 @@ public:
 public:
 	afx_msg void OnBnClickedButtonListenLan();
 	afx_msg void OnBnClickedButtonStopLan();
+protected:
+	CEdit m_ctrlEditPollingTime;
 };

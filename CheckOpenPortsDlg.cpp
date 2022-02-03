@@ -100,6 +100,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PROGRESS_STATUS, m_ctrlProgressStatus);
 	DDX_Control(pDX, IDC_BUTTON_PORT, m_ctrlBtnCheckOpenPorts);
 	DDX_Control(pDX, IDC_LIST_LAN, m_ctrlLANConnected);
+	DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -153,7 +154,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	SetThreadRunning(false);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
 	m_ctrlPortNum.SetWindowText(_T("80"));
-
+	m_ctrlEditPollingTime.SetWindowText(_T("5000"));
 	dll_handle = LoadLibrary(L"EnzTCP.dll");
 	if (dll_handle)
 	{
@@ -300,6 +301,7 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 			it++;
 			nRow++;
 		}
+		g_dlg->m_mConnected.clear();
 		mtx.unlock();
 		return;
 	}
@@ -408,12 +410,22 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 {
 	// TODO: Add your control notification handler code here
 	CString csText;
-	
+	CString csPollTime;
+
 	m_ctrlIPAddress.GetWindowText(csText);
 	wstring wstr(csText.GetBuffer());
 	string str = UnicodeToMultiByte(wstr);
-
-	m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener);
+	m_ctrlEditPollingTime.GetWindowText(csPollTime);
+	if (csPollTime.IsEmpty())
+	{
+		m_ctrlEditPollingTime.SetWindowText(_T("5000"));
+		m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, 5000);
+	}
+	else
+	{
+		int nPollTime = _ttoi(csPollTime);
+		m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime);
+	}
 }
 
 
