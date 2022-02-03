@@ -118,4 +118,6 @@ public:
 	afx_msg void OnBnClickedButtonStopLan();
 protected:
 	CEdit m_ctrlEditPollingTime;
+private:
+	CButton m_ctrlBtnListen;
 };

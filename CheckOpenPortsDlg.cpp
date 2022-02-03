@@ -101,6 +101,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_PORT, m_ctrlBtnCheckOpenPorts);
 	DDX_Control(pDX, IDC_LIST_LAN, m_ctrlLANConnected);
 	DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
+	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -412,6 +413,10 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	CString csText;
 	CString csPollTime;
 
+	m_ctrlBtnListen.EnableWindow(FALSE);
+	m_vList.clear();
+	m_ctrlLANConnected.DeleteAllItems();
+
 	m_ctrlIPAddress.GetWindowText(csText);
 	wstring wstr(csText.GetBuffer());
 	string str = UnicodeToMultiByte(wstr);
@@ -433,4 +438,5 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
 {
 	// TODO: Add your control notification handler code here
 	m_pfnPtrStopLocalAreaListening();
+	m_ctrlBtnListen.EnableWindow(TRUE);
 }
