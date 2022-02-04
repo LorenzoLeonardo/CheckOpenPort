@@ -70,6 +70,7 @@ protected:
 	HMODULE dll_handle;
 	
 public:
+	int m_nCurrentRowSelected;
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
 	HANDLE Handle[MAX_PORT];
@@ -121,4 +122,6 @@ protected:
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
+	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };

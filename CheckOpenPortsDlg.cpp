@@ -89,6 +89,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tMonitor = NULL;
+	m_nCurrentRowSelected = -1;
 }
 
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
@@ -116,6 +117,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT_AREA, &CCheckOpenPortsDlg::OnEnChangeEditArea)
 	ON_BN_CLICKED(IDC_BUTTON_LISTEN_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonListenLan)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStopLan)
+	ON_NOTIFY(NM_CLICK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMClickListLan)
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 
@@ -299,6 +302,7 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 		CString csIPAddress;
 		char szIPAddress[32];
 	
+	
 		while (it != g_dlg->m_mConnected.end())
 		{
 			inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
@@ -312,6 +316,11 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 			it++;
 			nRow++;
 		}
+		if ((g_dlg->m_mConnected.size()-1) < g_dlg->m_nCurrentRowSelected)
+			g_dlg->m_nCurrentRowSelected = g_dlg->m_mConnected.size() - 1;
+
+		g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+		g_dlg->m_ctrlLANConnected.SetFocus();
 		g_dlg->m_mConnected.clear();
 		mtx.unlock();
 		return;
@@ -408,6 +417,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
+	m_pfnPtrStopLocalAreaListening();
 	FreeLibrary(dll_handle);
 
 	CDialogEx::OnClose();
@@ -457,4 +467,23 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
 	// TODO: Add your control notification handler code here
 	m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
+}
+
+
+void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+	m_nCurrentRowSelected = pNMItemActivate->iItem;
+}
+
+
+void CCheckOpenPortsDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	// TODO: Add your message handler code here and/or call default
+	g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+	g_dlg->m_ctrlLANConnected.SetFocus();
+	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
 }
