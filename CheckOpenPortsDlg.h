@@ -67,10 +67,15 @@ protected:
 	int m_nThread;
 	vector<thread*> v_Thread;
 	thread* m_tMonitor;
-	HMODULE dll_handle;
 	
+	bool m_bHasClickClose;
 public:
+	HMODULE dll_handle;
 	int m_nCurrentRowSelected;
+	bool HasClickClose()
+	{
+		return m_bHasClickClose;
+	}
 	afx_msg void OnBnClickedButtonPort();
 	string UnicodeToMultiByte(wstring& wstr);
 	HANDLE Handle[MAX_PORT];

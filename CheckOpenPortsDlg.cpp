@@ -90,6 +90,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_tMonitor = NULL;
 	m_nCurrentRowSelected = -1;
+	m_bHasClickClose = FALSE;
 }
 
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
@@ -330,6 +331,13 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 	else if (strcmp(ipAddress, "stop") == 0)
 	{
 		g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
+		g_dlg->SetThreadRunning(false);
+		if (g_dlg->HasClickClose())
+		{
+			FreeLibrary(g_dlg->dll_handle);
+			((CDialog*)(g_dlg))->EndDialog(0);
+			
+		}
 	}
 	if (bIsopen)
 	{
@@ -420,9 +428,12 @@ void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
 	m_pfnPtrStopLocalAreaListening();
-	FreeLibrary(dll_handle);
+	m_bHasClickClose = TRUE;
 
-	CDialogEx::OnClose();
+	if (!m_bIsRunning)
+		CDialog::OnClose();
+	else
+		AfxMessageBox(_T("Still busy scanning. Please wait."));
 }
 
 
@@ -446,7 +457,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	m_vList.clear();
-	
+	SetThreadRunning(true);
 	m_ctrlIPAddress.GetWindowText(csText);
 	wstring wstr(csText.GetBuffer());
 	string str = UnicodeToMultiByte(wstr);
