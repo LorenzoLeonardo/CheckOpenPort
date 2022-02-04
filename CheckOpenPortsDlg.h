@@ -131,4 +131,5 @@ public:
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
 };
