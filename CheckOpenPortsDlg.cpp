@@ -119,6 +119,8 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_STOP_LAN, &CCheckOpenPortsDlg::OnBnClickedButtonStopLan)
 	ON_NOTIFY(NM_CLICK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMClickListLan)
 	ON_WM_KEYDOWN()
+	ON_NOTIFY(HDN_ITEMKEYDOWN, 0, &CCheckOpenPortsDlg::OnHdnItemKeyDownListLan)
+	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnLvnKeydownListLan)
 END_MESSAGE_MAP()
 
 
@@ -477,6 +479,13 @@ void CCheckOpenPortsDlg::OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 
 	m_nCurrentRowSelected = pNMItemActivate->iItem;
+	
+	
+	if (pNMItemActivate->iItem > -1)
+	{
+		CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
+		m_ctrlIPAddress.SetWindowText(cs);
+	}
 }
 
 
@@ -486,4 +495,43 @@ void CCheckOpenPortsDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
 	g_dlg->m_ctrlLANConnected.SetFocus();
 	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+void CCheckOpenPortsDlg::OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	// TODO: Add your control notification handler code here
+
+	OnNMClickListLan(pNMHDR, pResult);
+}
+
+
+void CCheckOpenPortsDlg::OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+	// TODO: Add your control notification handler code here
+
+	if (pLVKeyDow->wVKey == VK_UP)
+	{
+		if(g_dlg->m_nCurrentRowSelected > 0)
+		{
+			g_dlg->m_nCurrentRowSelected--;
+			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+			g_dlg->m_ctrlLANConnected.SetFocus();
+			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
+			m_ctrlIPAddress.SetWindowText(cs);
+		}
+	}
+	else if (pLVKeyDow->wVKey == VK_DOWN)
+	{
+		if (g_dlg->m_nCurrentRowSelected < (g_dlg->m_ctrlLANConnected.GetItemCount()-1))
+		{
+			g_dlg->m_nCurrentRowSelected++;
+			g_dlg->m_ctrlLANConnected.SetItemState(m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+			g_dlg->m_ctrlLANConnected.SetFocus();
+			CString cs = m_ctrlLANConnected.GetItemText(m_nCurrentRowSelected, 1);
+			m_ctrlIPAddress.SetWindowText(cs);
+		}
+	}
+
 }

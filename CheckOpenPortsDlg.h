@@ -124,4 +124,6 @@ public:
 	CButton m_ctrlBtnStopListening;
 	afx_msg void OnNMClickListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 };
