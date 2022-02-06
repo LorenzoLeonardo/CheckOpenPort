@@ -176,12 +176,13 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
 	}
 
-	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), };
+	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address") };
 	int nCol = 0;
 
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_FIXED_WIDTH, 30);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 150);
-	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 150);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
+	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	g_dlg = this;
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -293,7 +294,7 @@ void GetLastErrorMessageString(wstring &str, int nGetLastError)
 
 	str = lpMessage;
 }
-void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsopen)
+void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
 	mtx.lock();
 	if (strcmp(ipAddress, "end") == 0)
@@ -301,7 +302,7 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 		g_dlg->m_ctrlLANConnected.DeleteAllItems();
 
 		int col = 0;
-		map<ULONG, string>::iterator it = g_dlg->m_mConnected.begin();
+		map<ULONG, vector<string>>::iterator it = g_dlg->m_mConnected.begin();
 		int nRow = 0;
 		CString csIPAddress;
 		char szIPAddress[32];
@@ -316,7 +317,8 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 				to_wstring(nRow+1).c_str(), 0,0, 0, 0);
 
 			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second.c_str()));
+			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second[0].c_str()));
+			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, convert_to_wstring(it->second[1].c_str()));
 			it++;
 			nRow++;
 		}
@@ -345,8 +347,11 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, bool bIsop
 		ULONG ipaddr;
 
 		inet_pton(AF_INET, ipAddress, &ipaddr);
+		vector<string> vItem;
+		vItem.push_back(hostName);
+		vItem.push_back(macAddress);
 
-		g_dlg->m_mConnected[ipaddr] = hostName;
+		g_dlg->m_mConnected[ipaddr] = vItem;
 	}
 
 	mtx.unlock();

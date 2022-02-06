@@ -82,7 +82,7 @@ public:
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
 	CListCtrl m_ctrlLANConnected;
-	map<ULONG, string> m_mConnected;
+	map<ULONG, vector<string>> m_mConnected;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;
