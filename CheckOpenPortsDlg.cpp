@@ -78,6 +78,7 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_STATIC_INOCTETS, m_ctrlStaticInoctets);
+	DDX_Control(pDX, IDC_STATIC_OUTOCTETS, m_ctrlStaticOutoctets);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -151,13 +152,14 @@ unsigned __stdcall  RouterThread(void* parg)
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.16.9", error);//outoctets
 			ULONG ulOutoctets = value.value.uNumber;
 
-			double dlRate = (((double)(ulOutoctets) * 8 * 100) /(double) ulSpeed);
-
 			CString csRate;
 
-			csRate.Format(_T("%lf"), dlRate);
-			pDlg->SetRate(csRate);
+			csRate.Format(_T("Out Octets: %u"), ulOutoctets);
+			pDlg->SetOutoctets(csRate);
 
+			csRate.Format(_T("In Octets: %u"), ulInoctets);
+			pDlg->SetInoctets(csRate);
+		
 			Sleep(1000);
 		}
 	}
