@@ -15,6 +15,7 @@
 #include <vector>
 #include "EnzTCP.h"
 #include <map>
+#include <cmath>
 using namespace std;
 
 #define MAX_PORT 5000
@@ -26,7 +27,10 @@ typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
 typedef void (*FNStartLocalAreaListening)(const char* ipAddress, CallbackLocalAreaListener fnpPtr, int nPollingTime);
 typedef void (*FNStopLocalAreaListening)();
-
+typedef bool (*FNStartSNMP)(const char* szAgentIPAddress, const char* szCommunity, int nVersion, DWORD & dwLastError);
+typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
+typedef void (*FNEndSNMP)();
+typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
 
 WCHAR* convert_to_wstring(const char* str);
 char* convert_from_wstring(const WCHAR* wstr);
@@ -36,7 +40,10 @@ class CCheckOpenPortsDlg : public CDialogEx
 // Construction
 public:
 	CCheckOpenPortsDlg(CWnd* pParent = nullptr);	// standard constructor
-
+	FNSNMPGet m_pfnPtrSNMPGet;
+	FNEndSNMP m_pfnPtrEndSNMP;
+	FNGetDefaultGateway m_pfnPtrGetDefaultGateway;
+	FNStartSNMP m_pfnPtrStartSNMP;
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
@@ -48,6 +55,7 @@ public:
 	LPIsPortOpen m_pfnPtrIsPortOpen;
 	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
+
 
 // Implementation
 protected:
@@ -69,6 +77,11 @@ protected:
 	thread* m_tMonitor;
 	
 	bool m_bHasClickClose;
+	CString m_csRouterModel;
+	CString m_csRouterBrand;
+	CString m_csRouterDescription;
+
+
 public:
 	HMODULE dll_handle;
 	int m_nCurrentRowSelected;
@@ -124,6 +137,7 @@ public:
 	afx_msg void OnBnClickedButtonStopLan();
 protected:
 	CEdit m_ctrlEditPollingTime;
+	HANDLE m_hThreadRouter;
 public:
 	CButton m_ctrlBtnListen;
 	CButton m_ctrlBtnStopListening;
@@ -132,4 +146,25 @@ public:
 	afx_msg void OnHdnItemKeyDownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnLvnKeydownListLan(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult);
+	void SetRouterBrand(CString cs)
+	{
+		m_ctrlStaticRouterBrand.SetWindowText(cs);
+	}
+	void SetRouterName(CString cs)
+	{
+		m_ctrlStaticRouterName.SetWindowText(cs);
+	}
+	void SetRouterDescription(CString cs)
+	{
+		m_ctrlStaticRouterDescription.SetWindowText(cs);
+	}
+	void SetRouterUpTime(CString cs)
+	{
+		m_ctrlStaticRouterUpTime.SetWindowText(cs);
+	}
+private:
+	CStatic m_ctrlStaticRouterBrand;
+	CStatic m_ctrlStaticRouterName;
+	CStatic m_ctrlStaticRouterDescription;
+	CStatic m_ctrlStaticRouterUpTime;
 };

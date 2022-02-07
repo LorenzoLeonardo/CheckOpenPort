@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CheckOpenPorts", "CheckOpenPorst.vcxproj", "{20A8E3CD-5E38-4390-960A-B305E4333C67}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnzTCP", "..\Socket-Programming\EnzTCP\EnzTCP.vcxproj", "{702858AC-6210-495B-9F93-D7BB1ABF3785}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnzTCP", "..\Socket Programming\EnzTCP\EnzTCP.vcxproj", "{702858AC-6210-495B-9F93-D7BB1ABF3785}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

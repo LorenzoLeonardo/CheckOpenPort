@@ -105,6 +105,10 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_POLLINGTIME, m_ctrlEditPollingTime);
 	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
+	DDX_Control(pDX, IDC_STATIC_BRAND, m_ctrlStaticRouterBrand);
+	DDX_Control(pDX, IDC_STATIC_NAME, m_ctrlStaticRouterName);
+	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
+	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -127,7 +131,46 @@ END_MESSAGE_MAP()
 
 
 // CCheckOpenPortsDlg message handlers
+unsigned __stdcall  RouterThread(void* parg)
+{
+	CCheckOpenPortsDlg* pDlg = (CCheckOpenPortsDlg * )parg;
+	char szDefaultGateway[40];
+	memset(szDefaultGateway, 0, sizeof(szDefaultGateway));
+	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
+	{
+		DWORD error = 0;
+		if (pDlg->m_pfnPtrStartSNMP(szDefaultGateway, "public", 1, error))
+		{
+			smiVALUE value;
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
+			pDlg->SetRouterBrand(convert_to_wstring((const char*)value.value.string.ptr));
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
+			pDlg->SetRouterName(convert_to_wstring((const char*)value.value.string.ptr));
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
+			pDlg->SetRouterDescription(convert_to_wstring((const char*)value.value.string.ptr));
+		}
 
+		while (!pDlg->HasClickClose())
+		{
+			smiVALUE value;
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.3.0", error);//Brand name
+			ULONG ulDays = value.value.uNumber / 8640000;
+			double fRem = remainder(value.value.uNumber / (double)8640000, (double)8640000) - ulDays;
+			ULONG ulHour = fRem * 24;
+			fRem = (double)(fRem * 24) - ulHour;
+			ULONG ulMin = fRem * 60;
+			fRem = (double)(fRem * 60) - ulMin;
+			ULONG ulSec = fRem * 60;
+
+			CString csTime;
+			csTime.Format(_T("%u days, %u hours, %u min, %u secs"), ulDays, ulHour, ulMin, ulSec);
+			pDlg->SetRouterUpTime(csTime);
+			Sleep(1000);
+		}
+	}
+	_endthreadex(0);
+	return 0;
+}
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -174,6 +217,10 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrIsPortOpen = (LPIsPortOpen)GetProcAddress(dll_handle, "IsPortOpen");
 		m_pfnPtrStartLocalAreaListening = (FNStartLocalAreaListening)GetProcAddress(dll_handle, "StartLocalAreaListening");
 		m_pfnPtrStopLocalAreaListening = (FNStopLocalAreaListening)GetProcAddress(dll_handle, "StopLocalAreaListening");
+		m_pfnPtrStartSNMP = (FNStartSNMP)GetProcAddress(dll_handle, "StartSNMP");
+		m_pfnPtrSNMPGet = (FNSNMPGet)GetProcAddress(dll_handle, "SNMPGet");
+		m_pfnPtrEndSNMP = (FNEndSNMP)GetProcAddress(dll_handle, "EndSNMP");
+		m_pfnPtrGetDefaultGateway = (FNGetDefaultGateway)GetProcAddress(dll_handle, "GetDefaultGateway");
 	}
 
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address") };
@@ -184,6 +231,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 90);
 	m_ctrlLANConnected.InsertColumn(nCol, lpcRecHeader[nCol++], LVCFMT_LEFT, 120);
 	g_dlg = this;
+
+	m_hThreadRouter = (HANDLE)_beginthreadex(NULL, 0, RouterThread, this, 0, NULL);
+	
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
@@ -437,7 +487,12 @@ void CCheckOpenPortsDlg::OnClose()
 	m_bHasClickClose = TRUE;
 
 	if (!m_bIsRunning)
+	{
+		m_pfnPtrEndSNMP();
+		WaitForSingleObject(m_hThreadRouter, INFINITE);
+		
 		CDialog::OnClose();
+	}
 	else
 		AfxMessageBox(_T("Still busy scanning. Please wait."));
 }
