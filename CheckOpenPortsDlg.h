@@ -105,9 +105,6 @@ public:
 		m_bIsRunning = b;
 	}
 	void Increment();
-	void AddToList(CString s);
-	void PrintList();
-	void PrintList(CString csInput);
 	bool IsStopped()
 	{
 		return m_bStopLoop;

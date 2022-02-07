@@ -50,39 +50,8 @@ END_MESSAGE_MAP()
 
 // CCheckOpenPortsDlg dialog
 
-mutex mtx;
-
-void CCheckOpenPortsDlg::AddToList(CString s)
-{
-	//mtx.lock();
-	m_vList.push_back(s);
-	//mtx.unlock();
-}
-void CCheckOpenPortsDlg::PrintList(CString csInput)
-{
-	mtx.lock();
-	long nLength = m_ctrlResult.GetWindowTextLength();
-	m_ctrlResult.SetSel(0, 0);
-	m_ctrlResult.ReplaceSel(csInput);
-	mtx.unlock();
-}
-void CCheckOpenPortsDlg::PrintList()
-{
-//	m_ctrlResult.SetWindowText(_T(""));
-	//CString csRes = _T("");
-	if (m_vList.empty())
-		m_ctrlResult.SetWindowText(_T("No open ports found."));
-/*	else
-	{
-		for (int i = 0; i < m_vList.size(); i++)
-			csRes += m_vList[i];
-		m_ctrlResult.SetWindowText(csRes);
-	}*/
-	m_ctrlResult.SetFocus();
-	m_ctrlResult.SetSel(-1);
-	m_ctrlProgressStatus.ShowWindow(FALSE);
-	m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
-}
+mutex mtx_enumPorts;
+mutex mtx_lanlistener;
 
 CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_CHECKOPENPORST_DIALOG, pParent)
@@ -303,6 +272,7 @@ void CCheckOpenPortsDlg::Increment()
 
 	if(m_nThread >= MAX_PORT)
 	{
+		m_ctrlIPAddress.EnableWindow(TRUE);
 		m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
 		m_ctrlProgressStatus.ShowWindow(FALSE);
 	}
@@ -324,7 +294,7 @@ WCHAR* convert_to_wstring(const char* str)
 {
 	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str, (int)strlen(str), NULL, 0);
 	WCHAR* wstrTo = (WCHAR*)malloc((size_needed + 1) * sizeof(WCHAR));
-	memset(wstrTo, 0, (size_needed+1) * sizeof(WCHAR));
+	wmemset(wstrTo, 0, (size_needed+1));
 	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)strlen(str), wstrTo, size_needed);
 
 	return wstrTo;
@@ -332,66 +302,22 @@ WCHAR* convert_to_wstring(const char* str)
 void GetLastErrorMessageString(wstring &str, int nGetLastError)
 {
 	DWORD dwSize = 0;
-	TCHAR lpMessage[0xFF];
+	TCHAR lpMessage[1020];
 
 	dwSize = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,   // flags
 		NULL,                // lpsource
 		nGetLastError,                 // message id
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),    // languageid
 		lpMessage,              // output buffer
-		sizeof(lpMessage),     // size of msgbuf, bytes
+		sizeof(lpMessage)/sizeof(TCHAR),     // size of msgbuf, bytes
 		NULL);
 
 	str = lpMessage;
 }
 void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen)
 {
-	mtx.lock();
-	if (strcmp(ipAddress, "end") == 0)
-	{
-		g_dlg->m_ctrlLANConnected.DeleteAllItems();
+	mtx_lanlistener.lock();
 
-		int col = 0;
-		map<ULONG, vector<string>>::iterator it = g_dlg->m_mConnected.begin();
-		int nRow = 0;
-		CString csIPAddress;
-		char szIPAddress[32];
-	
-	
-		while (it != g_dlg->m_mConnected.end())
-		{
-			inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
-			csIPAddress = szIPAddress;
-
-			g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
-				to_wstring(nRow+1).c_str(), 0,0, 0, 0);
-
-			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
-			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second[0].c_str()));
-			g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, convert_to_wstring(it->second[1].c_str()));
-			it++;
-			nRow++;
-		}
-		if ((g_dlg->m_mConnected.size()-1) < g_dlg->m_nCurrentRowSelected)
-			g_dlg->m_nCurrentRowSelected = g_dlg->m_mConnected.size() - 1;
-
-		g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
-		g_dlg->m_ctrlLANConnected.SetFocus();
-		g_dlg->m_mConnected.clear();
-		mtx.unlock();
-		return;
-	}
-	else if (strcmp(ipAddress, "stop") == 0)
-	{
-		g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
-		g_dlg->SetThreadRunning(false);
-		if (g_dlg->HasClickClose())
-		{
-			FreeLibrary(g_dlg->dll_handle);
-			((CDialog*)(g_dlg))->EndDialog(0);
-			
-		}
-	}
 	if (bIsopen)
 	{
 		ULONG ipaddr;
@@ -403,13 +329,58 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, const char
 
 		g_dlg->m_mConnected[ipaddr] = vItem;
 	}
+	else
+	{
+		if (strcmp(ipAddress, "end") == 0)
+		{
+			g_dlg->m_ctrlLANConnected.DeleteAllItems();
 
-	mtx.unlock();
+			int col = 0;
+			map<ULONG, vector<string>>::iterator it = g_dlg->m_mConnected.begin();
+			int nRow = 0;
+			CString csIPAddress;
+			char szIPAddress[32];
+
+
+			while (it != g_dlg->m_mConnected.end())
+			{
+				inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
+				csIPAddress = szIPAddress;
+
+				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
+
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second[0].c_str()));
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, convert_to_wstring(it->second[1].c_str()));
+				it++;
+				nRow++;
+			}
+			if ((g_dlg->m_mConnected.size() - 1) < g_dlg->m_nCurrentRowSelected)
+				g_dlg->m_nCurrentRowSelected = (int)g_dlg->m_mConnected.size() - 1;
+
+			g_dlg->m_ctrlLANConnected.SetItemState(g_dlg->m_nCurrentRowSelected, LVIS_SELECTED, LVIS_SELECTED);
+			g_dlg->m_ctrlLANConnected.SetFocus();
+			g_dlg->m_mConnected.clear();
+		}
+		else if (strcmp(ipAddress, "stop") == 0)
+		{
+			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
+			g_dlg->SetThreadRunning(false);
+			if (g_dlg->HasClickClose())
+			{
+				FreeLibrary(g_dlg->dll_handle);
+				((CDialog*)(g_dlg))->EndDialog(0);
+
+			}
+
+		}
+	}
+	mtx_lanlistener.unlock();
 }
 void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 {
-	mtx.lock();
-
+	mtx_enumPorts.lock();
 	if (ipAddress != NULL)
 	{
 		CString csStr;
@@ -426,11 +397,12 @@ void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 		g_dlg->m_ctrlResult.ReplaceSel(csStr);
 		g_dlg->Increment();
 	}
-	mtx.unlock();
+	mtx_enumPorts.unlock();
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
+	m_ctrlIPAddress.EnableWindow(FALSE);
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
 	m_ctrlResult.SetWindowText(_T(""));
 	m_ctrlProgressStatus.ShowWindow(TRUE);
@@ -446,7 +418,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 void CCheckOpenPortsDlg::OnBnClickedButton2()
 {
 	m_bStopLoop = true;
-//	PrintList();
 }
 
 
@@ -479,7 +450,6 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 
 }
 
-
 void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
@@ -497,7 +467,6 @@ void CCheckOpenPortsDlg::OnClose()
 		AfxMessageBox(_T("Still busy scanning. Please wait."));
 }
 
-
 void CCheckOpenPortsDlg::OnEnChangeEditArea()
 {
 	// TODO:  If this is a RICHEDIT control, the control will not
@@ -507,7 +476,6 @@ void CCheckOpenPortsDlg::OnEnChangeEditArea()
 
 	// TODO:  Add your control notification handler code here
 }
-
 
 void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 {
@@ -617,6 +585,14 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (pNMItemActivate->iItem >= 0)
 	{
-		OnBnClickedButtonPort();
+		if (m_nThread >= MAX_PORT)
+		{
+			OnBnClickedButtonPort();
+		}
+		else
+		{
+			AfxMessageBox(_T("Port Listener is still busy!"));
+		}
+		
 	}
 }
