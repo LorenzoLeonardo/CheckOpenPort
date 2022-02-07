@@ -80,7 +80,7 @@ protected:
 	CString m_csRouterModel;
 	CString m_csRouterBrand;
 	CString m_csRouterDescription;
-
+	bool m_bStopLANClicked;
 
 public:
 	HMODULE dll_handle;
@@ -103,6 +103,8 @@ public:
 	void SetThreadRunning(bool b)
 	{
 		m_bIsRunning = b;
+		if(!m_bIsRunning && m_bStopLANClicked)
+			::MessageBox(this->GetSafeHwnd(),_T("Listening from Local Area Network has stopped."),_T("Local Area Listener Stopped"), MB_ICONEXCLAMATION);
 	}
 	void Increment();
 	bool IsStopped()

@@ -195,6 +195,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	// TODO: Add extra initialization here
 
+	m_bStopLANClicked = FALSE;
 	m_ctrlIPAddress.SetWindowText(_T("192.168.0.1"));
 	SetThreadRunning(false);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
@@ -390,13 +391,14 @@ void CallbackLANListener(const char* ipAddress, const char* hostName, const char
 		else if (strcmp(ipAddress, "stop") == 0)
 		{
 			g_dlg->m_ctrlBtnListen.EnableWindow(TRUE);
+			g_dlg->m_ctrlBtnStopListening.EnableWindow(FALSE);
 			g_dlg->SetThreadRunning(false);
-			if (g_dlg->HasClickClose())
-			{
-				FreeLibrary(g_dlg->dll_handle);
-				((CDialog*)(g_dlg))->EndDialog(0);
+		//	if (g_dlg->HasClickClose())
+		//	{
+		//		FreeLibrary(g_dlg->dll_handle);
+		//		((CDialog*)(g_dlg))->EndDialog(0);
 
-			}
+		//	}
 
 		}
 	}
@@ -484,7 +486,8 @@ void CCheckOpenPortsDlg::OnClose()
 	{
 		m_pfnPtrEndSNMP();
 		WaitForSingleObject(m_hThreadRouter, INFINITE);
-		
+		FreeLibrary(dll_handle);
+
 		CDialog::OnClose();
 	}
 	else
@@ -507,6 +510,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	CString csText;
 	CString csPollTime;
 
+	m_bStopLANClicked = FALSE;
 	m_ctrlBtnListen.EnableWindow(FALSE);
 	m_ctrlBtnStopListening.EnableWindow(TRUE);
 	m_vList.clear();
@@ -533,6 +537,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
 	// TODO: Add your control notification handler code here
 	m_pfnPtrStopLocalAreaListening();
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
+	m_bStopLANClicked = TRUE;
 }
 
 
@@ -615,7 +620,7 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 		}
 		else
 		{
-			AfxMessageBox(_T("Port Listener is still busy!"));
+			::MessageBox(this->GetSafeHwnd(), _T("Port Listener is still busy!"), _T("Port Listener Busy"), MB_ICONEXCLAMATION);
 		}
 		
 	}
