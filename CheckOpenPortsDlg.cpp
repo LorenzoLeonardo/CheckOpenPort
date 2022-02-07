@@ -75,9 +75,9 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_LISTEN_LAN, m_ctrlBtnListen);
 	DDX_Control(pDX, IDC_BUTTON_STOP_LAN, m_ctrlBtnStopListening);
 	DDX_Control(pDX, IDC_STATIC_BRAND, m_ctrlStaticRouterBrand);
-	DDX_Control(pDX, IDC_STATIC_NAME, m_ctrlStaticRouterName);
 	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
+	DDX_Control(pDX, IDC_STATIC_INOCTETS, m_ctrlStaticInoctets);
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -108,21 +108,30 @@ unsigned __stdcall  RouterThread(void* parg)
 	if (pDlg->m_pfnPtrGetDefaultGateway(szDefaultGateway))
 	{
 		DWORD error = 0;
+		smiVALUE value;
 		if (pDlg->m_pfnPtrStartSNMP(szDefaultGateway, "public", 1, error))
 		{
-			smiVALUE value;
+			
+			CString cs;
+		
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
-			pDlg->SetRouterBrand(convert_to_wstring((const char*)value.value.string.ptr));
+			cs = convert_to_wstring((const char*)value.value.string.ptr);
+			cs += _T(" ");
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
-			pDlg->SetRouterName(convert_to_wstring((const char*)value.value.string.ptr));
+			cs += convert_to_wstring((const char*)value.value.string.ptr);
+			pDlg->SetRouterBrand(cs);
+			
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
 			pDlg->SetRouterDescription(convert_to_wstring((const char*)value.value.string.ptr));
+
 		}
 
+		value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.5.9", error);//ifspeed
+		ULONG ulSpeed = value.value.uNumber;
 		while (!pDlg->HasClickClose())
 		{
-			smiVALUE value;
-			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.3.0", error);//Brand name
+
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.3.0", error);//time
 			ULONG ulDays = value.value.uNumber / 8640000;
 			double fRem = remainder(value.value.uNumber / (double)8640000, (double)8640000) - ulDays;
 			ULONG ulHour = fRem * 24;
@@ -134,6 +143,21 @@ unsigned __stdcall  RouterThread(void* parg)
 			CString csTime;
 			csTime.Format(_T("%u days, %u hours, %u min, %u secs"), ulDays, ulHour, ulMin, ulSec);
 			pDlg->SetRouterUpTime(csTime);
+
+			
+
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.10.9", error);//inoctets
+			ULONG ulInoctets = value.value.uNumber;
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.16.9", error);//outoctets
+			ULONG ulOutoctets = value.value.uNumber;
+
+			double dlRate = (((double)(ulOutoctets) * 8 * 100) /(double) ulSpeed);
+
+			CString csRate;
+
+			csRate.Format(_T("%lf"), dlRate);
+			pDlg->SetRate(csRate);
+
 			Sleep(1000);
 		}
 	}
