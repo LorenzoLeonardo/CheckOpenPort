@@ -297,11 +297,8 @@ void CCheckOpenPortsDlg::Increment()
 			m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
 			m_ctrlProgressStatus.ShowWindow(FALSE);
 		}
-
 	}
-	
 }
-
 
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
@@ -356,6 +353,7 @@ void CCheckOpenPortsDlg::OnClose()
 {
 	// TODO: Add your message handler code here and/or call default
 	m_pfnPtrStopLocalAreaListening();
+	m_pfnPtrStopSearchingOpenPorts();
 	m_bHasClickClose = TRUE;
 
 	if (!m_bIsRunning)
@@ -367,7 +365,10 @@ void CCheckOpenPortsDlg::OnClose()
 		CDialog::OnClose();
 	}
 	else
-		AfxMessageBox(_T("Still busy scanning. Please wait."));
+	{
+		m_bStopLANClicked = TRUE;
+		AfxMessageBox(_T("Application is still busy. Make sure all searching and listening has stopped."));
+	}
 }
 
 void CCheckOpenPortsDlg::OnEnChangeEditArea()

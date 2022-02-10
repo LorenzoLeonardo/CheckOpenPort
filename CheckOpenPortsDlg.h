@@ -16,6 +16,8 @@
 #include "EnzTCP.h"
 #include <map>
 #include <cmath>
+#include"CListCtrlCustom.h"
+
 using namespace std;
 
 #define MAX_PORT 65535
@@ -100,7 +102,7 @@ public:
 	HANDLE Handle[MAX_PORT];
 	CIPAddressCtrl m_ctrlIPAddress;
 	CEdit m_ctrlResult;
-	CListCtrl m_ctrlLANConnected;
+	CListCtrlCustom m_ctrlLANConnected;
 	map<ULONG, vector<string>> m_mConnected;
 	map<ULONG, vector<string>> m_mConnectedBefore;
 	vector<thread*> GetHandles()
