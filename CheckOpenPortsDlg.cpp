@@ -128,10 +128,11 @@ unsigned __stdcall  RouterThread(void* parg)
 
 		value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.5.9", error);//ifspeed
 		ULONG ulSpeed = value.value.uNumber;
+		ULONG uTimeBefore = 0, uTimeCurrent = 0, timedifference = 0;
+		ULONG ulOutoctetsBefore, ulOutoctetsCurrent;
 		while (!pDlg->HasClickClose())
 		{
-
-			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.3.0", error);//time
+			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.25.1.1.0", error);//time
 			ULONG ulDays = value.value.uNumber / 8640000;
 			double fRem = remainder(value.value.uNumber / (double)8640000, (double)8640000) - ulDays;
 			ULONG ulHour = fRem * 24;
@@ -139,24 +140,11 @@ unsigned __stdcall  RouterThread(void* parg)
 			ULONG ulMin = fRem * 60;
 			fRem = (double)(fRem * 60) - ulMin;
 			ULONG ulSec = fRem * 60;
-
+			uTimeBefore = ulSec;
+	
 			CString csTime;
-			csTime.Format(_T("%u days, %u hours, %u min, %u secs"), ulDays, ulHour, ulMin, ulSec);
+			csTime.Format(_T("Router's Up Time\r\n%u days, %u hours, %u min, %u secs"), ulDays, ulHour, ulMin, ulSec);
 			pDlg->SetRouterUpTime(csTime);
-
-			
-
-			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.10.9", error);//inoctets
-			ULONG ulInoctets = value.value.uNumber;
-			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.2.2.1.16.9", error);//outoctets
-			ULONG ulOutoctets = value.value.uNumber;
-
-			double dlRate = (((double)(ulOutoctets) * 8 * 100) /(double) ulSpeed);
-
-			CString csRate;
-
-			csRate.Format(_T("%lf"), dlRate);
-			pDlg->SetRate(csRate);
 
 			Sleep(1000);
 		}
