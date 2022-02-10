@@ -11,6 +11,7 @@
 #define IDC_EDIT_AREA                   1001
 #define IDC_BUTTON_PORT                 1002
 #define IDC_BUTTON2                     1003
+#define IDC_BUTTON_STOP_SEARCHINGPORTS  1003
 #define IDC_EDITPORT                    1004
 #define IDC_BUTTON_CHECKPORT            1005
 #define IDC_PROGRESS1                   1006

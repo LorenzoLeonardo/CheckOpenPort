@@ -126,6 +126,8 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
 	DDX_Control(pDX, IDC_STATIC_INOCTETS, m_ctrlStaticInoctets);
+	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
+	
 }
 
 BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
@@ -182,6 +184,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_bStopLANClicked = FALSE;
 	m_ctrlIPAddress.SetWindowText(_T("192.168.0.1"));
 	SetThreadRunning(false);
+	m_ctrlBtnStopSearchingPort.EnableWindow(false);
 	m_ctrlProgressStatus.ShowWindow(FALSE);
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	m_ctrlEditPollingTime.SetWindowText(_T("1000"));
@@ -199,6 +202,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 		m_pfnPtrSNMPGet = (FNSNMPGet)GetProcAddress(dll_handle, "SNMPGet");
 		m_pfnPtrEndSNMP = (FNEndSNMP)GetProcAddress(dll_handle, "EndSNMP");
 		m_pfnPtrGetDefaultGateway = (FNGetDefaultGateway)GetProcAddress(dll_handle, "GetDefaultGateway");
+		m_pfnPtrStopSearchingOpenPorts = (FNStopSearchingOpenPorts)GetProcAddress(dll_handle, "StopSearchingOpenPorts");
 	}
 
 	LPCTSTR lpcRecHeader[] = { _T("No."), _T("IP Address"), _T("HostName"), _T("MAC Address") };
@@ -285,12 +289,24 @@ void CCheckOpenPortsDlg::Increment()
 		m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
 		m_ctrlProgressStatus.ShowWindow(FALSE);
 	}
+	else
+	{
+		if (m_bStopSearchingOpenPorts)
+		{
+			m_ctrlIPAddress.EnableWindow(TRUE);
+			m_ctrlBtnCheckOpenPorts.EnableWindow(TRUE);
+			m_ctrlProgressStatus.ShowWindow(FALSE);
+		}
+
+	}
 	
 }
 
 
 void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 {
+	m_bStopSearchingOpenPorts = false;
+	m_ctrlBtnStopSearchingPort.EnableWindow(true);
 	m_ctrlIPAddress.EnableWindow(FALSE);
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
 	m_ctrlResult.SetWindowText(_T(""));
@@ -305,7 +321,9 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 
 void CCheckOpenPortsDlg::OnBnClickedButton2()
 {
-	m_bStopLoop = true;
+	m_bStopSearchingOpenPorts = true;
+	m_ctrlBtnStopSearchingPort.EnableWindow(false);
+	m_pfnPtrStopSearchingOpenPorts();
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
@@ -592,22 +610,27 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 
 void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError)
 {
-	mtx_enumPorts.lock();
+	
 	if (ipAddress != NULL)
 	{
-		CString csStr;
-		WCHAR* wr = convert_to_wstring(ipAddress);
-		wstring wsLastError;
-		GetLastErrorMessageString(wsLastError, nLastError);
 		if (bIsopen)
-			csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
-		//	else
-		//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
-		free(wr);
-		long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
-		g_dlg->m_ctrlResult.SetSel(0, 0);
-		g_dlg->m_ctrlResult.ReplaceSel(csStr);
+		{
+			mtx_enumPorts.lock();
+			CString csStr;
+			WCHAR* wr = convert_to_wstring(ipAddress);
+			wstring wsLastError;
+			GetLastErrorMessageString(wsLastError, nLastError);
+			if (bIsopen)
+				csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
+			//	else
+			//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
+			free(wr);
+			long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
+			g_dlg->m_ctrlResult.SetSel(0, 0);
+			g_dlg->m_ctrlResult.ReplaceSel(csStr);
+			mtx_enumPorts.unlock();
+		}
 		g_dlg->Increment();
 	}
-	mtx_enumPorts.unlock();
+
 }

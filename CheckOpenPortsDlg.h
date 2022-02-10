@@ -28,6 +28,7 @@ typedef bool (*FNStartSNMP)(const char* szAgentIPAddress, const char* szCommunit
 typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
 typedef void (*FNEndSNMP)();
 typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
+typedef bool (*FNStopSearchingOpenPorts)();
 
 inline WCHAR* convert_to_wstring(const char* str);
 inline char* convert_from_wstring(const WCHAR* wstr);
@@ -56,6 +57,7 @@ protected:
 	LPIsPortOpen m_pfnPtrIsPortOpen;
 	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
+	FNStopSearchingOpenPorts m_pfnPtrStopSearchingOpenPorts;
 
 	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
 	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
@@ -72,7 +74,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-	bool m_bStopLoop;
+	bool m_bStopSearchingOpenPorts;
 	bool m_bIsRunning;
 	vector<CString> m_vList;
 	CString m_IPAddress;
@@ -114,7 +116,7 @@ public:
 	void Increment();
 	bool IsStopped()
 	{
-		return m_bStopLoop;
+		return m_bStopSearchingOpenPorts;
 	}
 	bool IsThreadRunning()
 	{
@@ -133,6 +135,7 @@ public:
 	afx_msg void OnClose();
 protected:
 	CButton m_ctrlBtnCheckOpenPorts;
+	CButton m_ctrlBtnStopSearchingPort;
 public:
 	afx_msg void OnEnChangeEditArea();
 
