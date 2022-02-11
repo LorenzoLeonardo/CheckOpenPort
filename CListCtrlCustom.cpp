@@ -16,8 +16,8 @@ CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
 
 CListCtrlCustom::CListCtrlCustom()
 {
-	m_colRow1 = RGB(0, 255, 255);
-	m_colRow2 = RGB(240, 240, 240);
+	m_colRow1 = RGB(255, 255, 255);
+	m_colRow2 = RGB(245, 245, 245);
 }
 
 CListCtrlCustom::~CListCtrlCustom()
@@ -91,7 +91,7 @@ BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
 	CBrush white(RGB(255, 255, 255));
 
 	int chunk_height = GetCountPerPage();
-	pDC->FillRect(&rect, &white);
+	pDC->FillRect(&rect, &brush1);
 
 	for (int i = 0; i <= chunk_height; i++)
 	{
