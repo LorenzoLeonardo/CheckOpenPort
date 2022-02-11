@@ -18,10 +18,7 @@
 #include <cmath>
 using namespace std;
 
-#define MAX_PORT 5000
-
-
-
+#define MAX_PORT 65535
 
 typedef  void(*LPEnumOpenPorts)(const char*, int, FuncFindOpenPort);
 typedef  bool(*LPIsPortOpen)(const char*, int, int*);
@@ -32,8 +29,12 @@ typedef smiVALUE (*FNSNMPGet)(const char* szOID, DWORD & dwLastError);
 typedef void (*FNEndSNMP)();
 typedef bool (*FNGetDefaultGateway)(char szDefaultGateway[]);
 
-WCHAR* convert_to_wstring(const char* str);
-char* convert_from_wstring(const WCHAR* wstr);
+inline WCHAR* convert_to_wstring(const char* str);
+inline char* convert_from_wstring(const WCHAR* wstr);
+inline void GetLastErrorMessageString(wstring& str, int nGetLastError);
+template <typename Map>
+inline bool key_compare(Map const& lhs, Map const& rhs);
+
 // CCheckOpenPortsDlg dialog
 class CCheckOpenPortsDlg : public CDialogEx
 {
@@ -49,13 +50,16 @@ public:
 	enum { IDD = IDD_CHECKOPENPORST_DIALOG };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
 	LPIsPortOpen m_pfnPtrIsPortOpen;
 	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
 	FNStopLocalAreaListening m_pfnPtrStopLocalAreaListening;
 
+	static void CallbackLANListener(const char* ipAddress, const char* hostName, const char* macAddress, bool bIsopen);
+	static void CallBackEnumPort(char* ipAddress, int nPort, bool bIsopen, int nLastError);
+	static unsigned __stdcall  RouterThread(void* parg);
 
 // Implementation
 protected:
@@ -96,6 +100,7 @@ public:
 	CEdit m_ctrlResult;
 	CListCtrl m_ctrlLANConnected;
 	map<ULONG, vector<string>> m_mConnected;
+	map<ULONG, vector<string>> m_mConnectedBefore;
 	vector<thread*> GetHandles()
 	{
 		return v_Thread;
@@ -167,4 +172,5 @@ private:
 	CStatic m_ctrlStaticRouterDescription;
 	CStatic m_ctrlStaticRouterUpTime;
 	CStatic m_ctrlStaticInoctets;
+
 };
