@@ -319,7 +319,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 	m_ctrlBtnCheckOpenPorts.EnableWindow(FALSE);
 	m_ctrlResult.SetWindowText(_T(""));
 	m_ctrlProgressStatus.ShowWindow(TRUE);
-	m_ctrlProgressStatus.SetRange(1, MAX_PORT);
+	m_ctrlProgressStatus.SetRange32(1, MAX_PORT);
 	m_nThread = 0;
 	m_ctrlIPAddress.GetWindowText(m_IPAddress);
 #ifdef UNICODE
@@ -550,14 +550,18 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
 #ifdef UNICODE
-			cs = convert_to_wstring((const char*)value.value.string.ptr);
+			WCHAR* pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
+			cs = pszTemp;
+			free(pszTemp);
 #else
 			cs = value.value.string.ptr;
 #endif
 			cs += _T(" ");
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
 #ifdef UNICODE
-			cs += convert_to_wstring((const char*)value.value.string.ptr);
+			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
+			cs += pszTemp;
+			free(pszTemp);
 #else
 			cs = value.value.string.ptr;
 #endif
@@ -565,7 +569,9 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
 #ifdef UNICODE
-			pDlg->SetRouterDescription(convert_to_wstring((const char*)value.value.string.ptr));
+			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
+			pDlg->SetRouterDescription(pszTemp);
+			free(pszTemp);
 #else
 			pDlg->SetRouterDescription((const char*)value.value.string.ptr);
 #endif
