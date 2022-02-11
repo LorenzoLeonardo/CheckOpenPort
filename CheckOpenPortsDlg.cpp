@@ -39,7 +39,7 @@ inline WCHAR* convert_to_wstring(const char* str)
 	return wstrTo;
 }
 
-inline void GetLastErrorMessageString(wstring& str, int nGetLastError)
+inline void GetLastErrorMessageString(_tstring& str, int nGetLastError)
 {
 	DWORD dwSize = 0;
 	TCHAR lpMessage[1020];
@@ -125,7 +125,6 @@ void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_BRAND, m_ctrlStaticRouterBrand);
 	DDX_Control(pDX, IDC_STATIC_DESCRIPITON, m_ctrlStaticRouterDescription);
 	DDX_Control(pDX, IDC_STATIC_UPTIME, m_ctrlStaticRouterUpTime);
-	DDX_Control(pDX, IDC_STATIC_INOCTETS, m_ctrlStaticInoctets);
 	DDX_Control(pDX, IDC_BUTTON_STOP_SEARCHINGPORTS, m_ctrlBtnStopSearchingPort);
 	
 }
@@ -203,7 +202,7 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 
 	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
-	dll_handle = LoadLibrary(L"EnzTCP.dll");
+	dll_handle = LoadLibrary(_T("EnzTCP.dll"));
 	if (dll_handle)
 	{
 		m_pfnPtrEnumOpenPorts = (LPEnumOpenPorts)GetProcAddress(dll_handle, "EnumOpenPorts");
@@ -323,15 +322,20 @@ void CCheckOpenPortsDlg::OnBnClickedButtonPort()
 	m_ctrlProgressStatus.SetRange(1, MAX_PORT);
 	m_nThread = 0;
 	m_ctrlIPAddress.GetWindowText(m_IPAddress);
+#ifdef UNICODE
 	wstring strIP(m_IPAddress.GetBuffer());
-
 	m_pfnPtrEnumOpenPorts(UnicodeToMultiByte(strIP).c_str(), MAX_PORT, CallBackEnumPort);
+#else
+	m_pfnPtrEnumOpenPorts(m_IPAddress.GetBuffer(), MAX_PORT, CallBackEnumPort);
+#endif
+	
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButton2()
 {
 	m_bStopSearchingOpenPorts = true;
 	m_ctrlBtnStopSearchingPort.EnableWindow(false);
+	m_ctrlBtnCheckOpenPorts.EnableWindow(true);
 	m_pfnPtrStopSearchingOpenPorts();
 }
 
@@ -343,10 +347,15 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 	m_ctrlIPAddress.GetWindowText(cs);
 	m_ctrlPortNum.GetWindowText(csPort);
 	int nLastError = 0;
+#ifdef UNICODE
 	wstring wStr(cs.GetBuffer());
 
 	if (m_pfnPtrIsPortOpen(UnicodeToMultiByte(wStr).c_str(), _ttoi(csPort), &nLastError))
 	{
+#else
+	if (m_pfnPtrIsPortOpen(cs.GetBuffer(), _ttoi(csPort), &nLastError))
+	{
+#endif
 		CString csRes;
 		m_ctrlResult.GetWindowText(csRes);
 		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
@@ -359,6 +368,7 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
 		m_ctrlResult.SetWindowText(csRes);
 	}
+
 }
 
 void CCheckOpenPortsDlg::OnClose()
@@ -405,6 +415,8 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 	m_vList.clear();
 	SetThreadRunning(true);
 	m_ctrlIPAddress.GetWindowText(csText);
+
+#ifdef UNICODE
 	wstring wstr(csText.GetBuffer());
 	string str = UnicodeToMultiByte(wstr);
 	m_ctrlEditPollingTime.GetWindowText(csPollTime);
@@ -418,6 +430,18 @@ void CCheckOpenPortsDlg::OnBnClickedButtonListenLan()
 		int nPollTime = _ttoi(csPollTime);
 		m_pfnPtrStartLocalAreaListening(str.c_str(), CallbackLANListener, nPollTime);
 	}
+#else
+	if (csPollTime.IsEmpty())
+	{
+		m_ctrlEditPollingTime.SetWindowText(_T("1000"));
+		m_pfnPtrStartLocalAreaListening(csText.GetBuffer(), CallbackLANListener, 1000);
+	}
+	else
+	{
+		int nPollTime = _ttoi(csPollTime);
+		m_pfnPtrStartLocalAreaListening(csText.GetBuffer(), CallbackLANListener, nPollTime);
+	}
+#endif
 }
 
 void CCheckOpenPortsDlg::OnBnClickedButtonStopLan()
@@ -497,7 +521,7 @@ void CCheckOpenPortsDlg::OnNMDblclkListLan(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if (pNMItemActivate->iItem >= 0)
 	{
-		if (m_nThread >= MAX_PORT)
+		if ((m_nThread >= MAX_PORT) || m_bStopSearchingOpenPorts)
 		{
 			OnBnClickedButtonPort();
 		}
@@ -525,14 +549,26 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			CString cs;
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
+#ifdef UNICODE
 			cs = convert_to_wstring((const char*)value.value.string.ptr);
+#else
+			cs = value.value.string.ptr;
+#endif
 			cs += _T(" ");
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
+#ifdef UNICODE
 			cs += convert_to_wstring((const char*)value.value.string.ptr);
+#else
+			cs = value.value.string.ptr;
+#endif
 			pDlg->SetRouterBrand(cs);
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
+#ifdef UNICODE
 			pDlg->SetRouterDescription(convert_to_wstring((const char*)value.value.string.ptr));
+#else
+			pDlg->SetRouterDescription((const char*)value.value.string.ptr);
+#endif
 		}
 
 		while (!pDlg->HasClickClose())
@@ -594,13 +630,21 @@ void CCheckOpenPortsDlg::CallbackLANListener(const char* ipAddress, const char* 
 			{
 				inet_ntop(AF_INET, (const void*)&(it->first), szIPAddress, sizeof(szIPAddress));
 				csIPAddress = szIPAddress;
-
+#ifdef UNICODE
 				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
 					to_wstring(nRow + 1).c_str(), 0, 0, 0, 0);
 
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, convert_to_wstring(it->second[0].c_str()));
 				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, convert_to_wstring(it->second[1].c_str()));
+#else 
+				g_dlg->m_ctrlLANConnected.InsertItem(LVIF_TEXT | LVIF_STATE, nRow,
+					to_string(nRow + 1).c_str(), 0, 0, 0, 0);
+
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 1, csIPAddress);
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 2, it->second[0].c_str());
+				g_dlg->m_ctrlLANConnected.SetItemText(nRow, col + 3, it->second[1].c_str());
+#endif
 				it++;
 				nRow++;
 			}
@@ -630,14 +674,21 @@ void CCheckOpenPortsDlg::CallBackEnumPort(char* ipAddress, int nPort, bool bIsop
 		{
 			mtx_enumPorts.lock();
 			CString csStr;
-			WCHAR* wr = convert_to_wstring(ipAddress);
-			wstring wsLastError;
+#ifdef UNICODE
+			TCHAR* wr = convert_to_wstring(ipAddress);
+#else
+			TCHAR* wr = ipAddress;
+#endif
+			_tstring wsLastError;
 			GetLastErrorMessageString(wsLastError, nLastError);
 			if (bIsopen)
 				csStr.Format(_T("%s %d is open.\r\n"), wr, nPort);
 			//	else
 			//		csStr.Format(_T("%s %d %s."), wr, nPort, wsLastError.c_str());
+#ifdef UNICODE
 			free(wr);
+#endif
+
 			long nLength = g_dlg->m_ctrlResult.GetWindowTextLength();
 			g_dlg->m_ctrlResult.SetSel(0, 0);
 			g_dlg->m_ctrlResult.ReplaceSel(csStr);

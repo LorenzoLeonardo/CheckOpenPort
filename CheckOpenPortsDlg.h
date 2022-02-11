@@ -18,6 +18,15 @@
 #include <cmath>
 #include "CListCtrlCustom.h"
 
+
+#ifndef _tstring
+#ifdef UNICODE
+	#define _tstring wstring
+#else
+	#define _tstring string
+#endif
+#endif
+
 using namespace std;
 
 #define MAX_PORT 65535
@@ -34,7 +43,7 @@ typedef bool (*FNStopSearchingOpenPorts)();
 
 inline WCHAR* convert_to_wstring(const char* str);
 inline char* convert_from_wstring(const WCHAR* wstr);
-inline void GetLastErrorMessageString(wstring& str, int nGetLastError);
+inline void GetLastErrorMessageString(_tstring& str, int nGetLastError);
 template <typename Map>
 inline bool key_compare(Map const& lhs, Map const& rhs);
 
@@ -169,19 +178,8 @@ public:
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
-	void SetInoctets(CString cs)
-	{
-		m_ctrlStaticInoctets.SetWindowText(cs);
-	}
-	void SetOutoctets(CString cs)
-	{
-		m_ctrlStaticOutoctets.SetWindowText(cs);
-	}
 private:
 	CStatic m_ctrlStaticRouterBrand;
 	CStatic m_ctrlStaticRouterDescription;
 	CStatic m_ctrlStaticRouterUpTime;
-	CStatic m_ctrlStaticInoctets;
-	CStatic m_ctrlStaticOutoctets;
-
 };

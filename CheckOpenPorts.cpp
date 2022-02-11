@@ -43,24 +43,24 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.
-	INITCOMMONCONTROLSEX InitCtrls;
-	InitCtrls.dwSize = sizeof(InitCtrls);
+//	INITCOMMONCONTROLSEX InitCtrls;
+//	InitCtrls.dwSize = sizeof(InitCtrls);
 	// Set this to include all the common control classes you want to use
 	// in your application.
-	InitCtrls.dwICC = ICC_WIN95_CLASSES;
-	InitCommonControlsEx(&InitCtrls);
+//	InitCtrls.dwICC = ICC_WIN95_CLASSES;
+//	InitCommonControlsEx(&InitCtrls);
 
 	CWinApp::InitInstance();
 
 
-	AfxEnableControlContainer();
+	//AfxEnableControlContainer();
 
 	// Create the shell manager, in case the dialog contains
 	// any shell tree view or shell list view controls.
 	CShellManager *pShellManager = new CShellManager;
 
 	// Activate "Windows Native" visual manager for enabling themes in MFC controls
-	CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
+	//CMFCVisualManager::SetDefaultManager(RUNTIME_CLASS(CMFCVisualManagerWindows));
 
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
@@ -97,7 +97,7 @@ BOOL CCheckOpenPortsApp::InitInstance()
 	}
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
-	ControlBarCleanUp();
+//	ControlBarCleanUp();
 #endif
 
 	// Since the dialog has been closed, return FALSE so that we exit the
