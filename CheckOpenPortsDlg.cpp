@@ -549,6 +549,13 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			CString cs;
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.6.0", error);//Brand name
+			if (error != SNMPAPI_SUCCESS)
+			{
+				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
+
+				_endthreadex(0);
+				return 0;
+			}
 #ifdef UNICODE
 			WCHAR* pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
 			cs = pszTemp;
@@ -558,6 +565,12 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 #endif
 			cs += _T(" ");
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.5.0", error);//Model name
+			if (error != SNMPAPI_SUCCESS)
+			{
+				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
+				_endthreadex(0);
+				return 0;
+			}
 #ifdef UNICODE
 			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
 			cs += pszTemp;
@@ -568,6 +581,12 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 			pDlg->SetRouterBrand(cs);
 
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.1.1.0", error);//decription
+			if (error != SNMPAPI_SUCCESS)
+			{
+				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
+				_endthreadex(0);
+				return 0;
+			}
 #ifdef UNICODE
 			pszTemp = convert_to_wstring((const char*)value.value.string.ptr);
 			pDlg->SetRouterDescription(pszTemp);
@@ -580,6 +599,11 @@ unsigned __stdcall  CCheckOpenPortsDlg::RouterThread(void* parg)
 		while (!pDlg->HasClickClose())
 		{
 			value = pDlg->m_pfnPtrSNMPGet(".1.3.6.1.2.1.25.1.1.0", error);//time
+			if (error != SNMPAPI_SUCCESS)
+			{
+				AfxMessageBox(_T("Please turn on the SNMP of your main router."));
+				break;
+			}
 			ULONG ulDays = value.value.uNumber / 8640000;
 			double fRem = remainder(value.value.uNumber / (double)8640000, (double)8640000) - ulDays;
 			ULONG ulHour = fRem * 24;
