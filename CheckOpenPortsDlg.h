@@ -163,14 +163,19 @@ public:
 	{
 		m_ctrlStaticRouterUpTime.SetWindowText(cs);
 	}
-	void SetRate(CString cs)
+	void SetInoctets(CString cs)
 	{
 		m_ctrlStaticInoctets.SetWindowText(cs);
+	}
+	void SetOutoctets(CString cs)
+	{
+		m_ctrlStaticOutoctets.SetWindowText(cs);
 	}
 private:
 	CStatic m_ctrlStaticRouterBrand;
 	CStatic m_ctrlStaticRouterDescription;
 	CStatic m_ctrlStaticRouterUpTime;
 	CStatic m_ctrlStaticInoctets;
+	CStatic m_ctrlStaticOutoctets;
 
 };
