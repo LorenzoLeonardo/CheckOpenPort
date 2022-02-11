@@ -2,57 +2,108 @@
 #include "CListCtrlCustom.h"
 
 
-CListCtrlCustom::CListCtrlCustom()
+CHeaderCtrlCustom::CHeaderCtrlCustom()
 {
 
+
+}
+CHeaderCtrlCustom:: ~CHeaderCtrlCustom()
+{
+
+}
+
+
+
+CListCtrlCustom::CListCtrlCustom()
+{
+	m_colRow1 = RGB(0, 255, 255);
+	m_colRow2 = RGB(240, 240, 240);
 }
 
 CListCtrlCustom::~CListCtrlCustom()
 {
 }
 
-BEGIN_MESSAGE_MAP(CListCtrlCustom, CListCtrl)
 
+
+
+BEGIN_MESSAGE_MAP(CListCtrlCustom, CListCtrl)
+	ON_WM_ERASEBKGND()
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnCustomDraw)
 
 END_MESSAGE_MAP()
 
 void CListCtrlCustom::OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
 {
+	*pResult = 0;
 	LPNMLVCUSTOMDRAW  lplvcd = (LPNMLVCUSTOMDRAW)pNMHDR;
+
 	size_t iRow = lplvcd->nmcd.dwItemSpec;
 	bool bHighlighted = false;
 
 	switch (lplvcd->nmcd.dwDrawStage)
 	{
-	case CDDS_PREPAINT:
-	{
-		*pResult = CDRF_NOTIFYITEMDRAW;
-		break;
-	}
-	// Modify item text and or background
-	case CDDS_ITEMPREPAINT:
-	case CDDS_SUBITEM:
-	{
-		if (lplvcd->nmcd.uItemState & CDIS_SELECTED)
+		case CDDS_PREPAINT:
 		{
-		//	lplvcd->nmcd.uItemState = ((lplvcd->nmcd.uItemState) & (~CDIS_SELECTED));
-		//lplvcd->clrTextBk = RGB(0, 255, 255);
+			*pResult = CDRF_NOTIFYITEMDRAW;
+			return;
 		}
-		else
+		// Modify item text and or background
+		case CDDS_ITEMPREPAINT:
+		{
+		
+			*pResult = CDRF_NOTIFYSUBITEMDRAW;
+			return;
+		}
+
+		case CDDS_SUBITEM | CDDS_PREPAINT | CDDS_ITEM:
 		{
 			if (iRow % 2)
 			{
-				lplvcd->clrTextBk = RGB(0, 255, 255);
+				lplvcd->clrTextBk = m_colRow1;
 			}
 			else
 			{
-				lplvcd->clrTextBk = RGB(255, 255, 255);
+				lplvcd->clrTextBk = m_colRow2;
 			}
-		}
 
-		*pResult = CDRF_SKIPPOSTPAINT;
-		break;
+
+			*pResult = CDRF_DODEFAULT;
+			return;
+		}
 	}
+}
+
+
+BOOL CListCtrlCustom::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CRect rect;
+	GetClientRect(rect);
+
+
+	POINT mypoint;
+
+	memset(&mypoint, 0, sizeof(mypoint));
+	CBrush brush0(m_colRow1);
+	CBrush brush1(m_colRow2);
+	CBrush white(RGB(255, 255, 255));
+
+	int chunk_height = GetCountPerPage();
+	pDC->FillRect(&rect, &white);
+
+	for (int i = 0; i <= chunk_height; i++)
+	{
+		GetItemPosition(i, &mypoint);
+		rect.top = mypoint.y;
+		GetItemPosition(i + 1, &mypoint);
+		rect.bottom = mypoint.y;
+		pDC->FillRect(&rect, i % 2 ? &brush0 : &brush1);
 	}
+
+	brush0.DeleteObject();
+	brush1.DeleteObject();
+
+	return FALSE;
 }

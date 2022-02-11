@@ -146,14 +146,24 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_NOTIFY(HDN_ITEMKEYDOWN, 0, &CCheckOpenPortsDlg::OnHdnItemKeyDownListLan)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnLvnKeydownListLan)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMDblclkListLan)
+	ON_WM_CREATE()
 END_MESSAGE_MAP()
 
 
+int CCheckOpenPortsDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDialog::OnCreate(lpCreateStruct) == -1)
+		return -1;
+	
+	//m_ctrlLANConnected.Create(LVS_REPORT | LVS_SHOWSELALWAYS | LBS_NOTIFY, CRect(0, 0, 400, 200), this, IDC_LIST_LAN);
+	//m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
+	return 0;
+}
 BOOL CCheckOpenPortsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.
@@ -189,7 +199,9 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlPortNum.SetWindowText(_T("80"));
 	m_ctrlEditPollingTime.SetWindowText(_T("1000"));
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
-	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FULLROWSELECT| LVS_EX_GRIDLINES);
+
+
+	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
 	dll_handle = LoadLibrary(L"EnzTCP.dll");
 	if (dll_handle)

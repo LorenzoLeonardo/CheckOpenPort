@@ -16,7 +16,7 @@
 #include "EnzTCP.h"
 #include <map>
 #include <cmath>
-#include"CListCtrlCustom.h"
+#include "CListCtrlCustom.h"
 
 using namespace std;
 
@@ -74,6 +74,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 	bool m_bStopSearchingOpenPorts;
