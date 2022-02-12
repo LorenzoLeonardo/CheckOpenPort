@@ -108,8 +108,15 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_tMonitor = NULL;
 	m_nCurrentRowSelected = -1;
 	m_bHasClickClose = FALSE;
-}
 
+	m_hBrushBackGround = CreateSolidBrush(RGB(64, 86, 141));
+	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
+}
+CCheckOpenPortsDlg::~CCheckOpenPortsDlg()
+{
+	DeleteObject(m_hBrushBackGround);
+	DeleteObject(m_hBrushEditArea);
+}
 void CCheckOpenPortsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -146,6 +153,7 @@ BEGIN_MESSAGE_MAP(CCheckOpenPortsDlg, CDialogEx)
 	ON_NOTIFY(LVN_KEYDOWN, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnLvnKeydownListLan)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_LAN, &CCheckOpenPortsDlg::OnNMDblclkListLan)
 	ON_WM_CREATE()
+	ON_WM_CTLCOLOR()
 END_MESSAGE_MAP()
 
 
@@ -199,6 +207,8 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	m_ctrlEditPollingTime.SetWindowText(_T("1000"));
 	m_ctrlBtnStopListening.EnableWindow(FALSE);
 
+	
+	::SetWindowTheme(GetDlgItem(IDC_STATIC_ROUTER_INFO)->GetSafeHwnd(), _T(""), _T(""));
 
 	m_ctrlLANConnected.SetExtendedStyle(LVS_EX_FLATSB | LVS_EX_HEADERDRAGDROP | LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
@@ -230,6 +240,38 @@ BOOL CCheckOpenPortsDlg::OnInitDialog()
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
+HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	switch (nCtlColor)
+	{
+		case CTLCOLOR_STATIC:
+		{
+			pDC->SetTextColor(RGB(255, 255, 255));
+			pDC->SetBkColor(RGB(204, 213, 240));
+			pDC->SetBkMode(TRANSPARENT);
+			return m_hBrushBackGround;
+		}
+
+		case CTLCOLOR_DLG:
+		{
+			//pDC->SetTextColor(ENZO_COLOR_WHITE);
+			pDC->SetBkColor(RGB(64, 86, 141));
+			//pDC->SetBkMode(TRANSPARENT);
+			return m_hBrushBackGround;
+		}
+		case CTLCOLOR_EDIT:
+		{
+			pDC->SetBkColor(RGB(255, 255, 255));
+			return m_hBrushEditArea;
+			//pDC->SetBkMode(TRANSPARENT);
+		}
+		default:
+			return CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	}
+	return hbr;
+}
 void CCheckOpenPortsDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
 	if ((nID & 0xFFF0) == IDM_ABOUTBOX)

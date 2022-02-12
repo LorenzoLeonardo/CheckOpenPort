@@ -53,6 +53,7 @@ class CCheckOpenPortsDlg : public CDialogEx
 // Construction
 public:
 	CCheckOpenPortsDlg(CWnd* pParent = nullptr);	// standard constructor
+	~CCheckOpenPortsDlg();
 	FNSNMPGet m_pfnPtrSNMPGet;
 	FNEndSNMP m_pfnPtrEndSNMP;
 	FNGetDefaultGateway m_pfnPtrGetDefaultGateway;
@@ -64,6 +65,9 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
+	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	HBRUSH m_hBrushBackGround;
+	HBRUSH m_hBrushEditArea;
 	LPEnumOpenPorts m_pfnPtrEnumOpenPorts;
 	LPIsPortOpen m_pfnPtrIsPortOpen;
 	FNStartLocalAreaListening m_pfnPtrStartLocalAreaListening;
