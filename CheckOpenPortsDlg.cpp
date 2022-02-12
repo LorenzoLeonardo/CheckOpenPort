@@ -109,7 +109,7 @@ CCheckOpenPortsDlg::CCheckOpenPortsDlg(CWnd* pParent /*=nullptr*/)
 	m_nCurrentRowSelected = -1;
 	m_bHasClickClose = FALSE;
 
-	m_hBrushBackGround = CreateSolidBrush(RGB(64, 86, 141));
+	m_hBrushBackGround = CreateSolidBrush(RGB(93, 107, 153));
 	m_hBrushEditArea = CreateSolidBrush(RGB(255, 255, 255));
 }
 CCheckOpenPortsDlg::~CCheckOpenPortsDlg()
@@ -248,10 +248,21 @@ HBRUSH CCheckOpenPortsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	{
 		case CTLCOLOR_STATIC:
 		{
-			pDC->SetTextColor(RGB(255, 255, 255));
-			pDC->SetBkColor(RGB(204, 213, 240));
-			pDC->SetBkMode(TRANSPARENT);
-			return m_hBrushBackGround;
+			int id = pWnd->GetDlgCtrlID();
+
+			if (id == IDC_EDIT_AREA)
+			{
+				pDC->SetTextColor(RGB(0, 0, 0));
+				pDC->SetBkColor(RGB(255, 255, 255));
+				return m_hBrushEditArea;
+			}
+			else
+			{
+				pDC->SetTextColor(RGB(255, 255, 255));
+				pDC->SetBkColor(RGB(204, 213, 240));
+				pDC->SetBkMode(TRANSPARENT);
+				return m_hBrushBackGround;
+			}
 		}
 
 		case CTLCOLOR_DLG:
@@ -399,16 +410,17 @@ void CCheckOpenPortsDlg::OnBnClickedButtonCheckport()
 	{
 #endif
 		CString csRes;
-		m_ctrlResult.GetWindowText(csRes);
-		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
-		m_ctrlResult.SetWindowText(csRes);
+		csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is open.\r\n");
+	
+		g_dlg->m_ctrlResult.SetSel(0, 0);
+		g_dlg->m_ctrlResult.ReplaceSel(csRes);
 	}
 	else
 	{
 		CString csRes;
-		m_ctrlResult.GetWindowText(csRes);
-		csRes += +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
-		m_ctrlResult.SetWindowText(csRes);
+		csRes = +_T("Port (") + csPort + _T(") Of (") + cs + _T(") is closed.\r\n");
+		g_dlg->m_ctrlResult.SetSel(0, 0);
+		g_dlg->m_ctrlResult.ReplaceSel(csRes);
 	}
 
 }
